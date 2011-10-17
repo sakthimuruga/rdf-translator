@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>{{title}}</title>
+	<link rel="stylesheet" type="text/css" href="/static/style.css"/>
+	<script type="text/javascript" src="/static/action.js"></script>
+	<meta name="author" content="Alex Stolz">
+	<!-- Date: 2011-10-14 -->
+</head>
+<body>
+	<header><strong>RDF Translator</strong>, powered by RDFLib 3.1.0</header>
+	<article>
+		<input type="text" id="uri" name="uri" required pattern="http(s)?://.+" title="Expect an HTTP address" placeholder="http://www.ebusiness-unibw.org">
+		<button type="button" onclick="submit()">Submit</button>
+		<aside>
+			<label>Input</label>
+			<select id="in">
+				<option value="">... automatically</option>
+				<option value="rdfa">RDFa</option>
+				<option value="microdata">Microdata</option>
+				<option value="n3">N3</option>
+				<option value="nt">N-Triples</option>
+				<option value="xml">RDF/XML</option>
+				<option value="trix">Trix</option>
+			</select>
+			<label>Output</label>
+			<select id="out">
+				<option value="pretty-xml">Abbreviated RDF/XML</option>
+				<option value="xml">RDF/XML</option>
+				<option value="n3">N3</option>
+				<option value="nt">N-Triples</option>
+				<option value="trix">Trix</option>
+			</select>
+		</aside>
+		<section id="serialization"></section>
+		<section>
+			<p>Please note that the service utilizes RDFLib 3.1.0 to parse and serialize between data formats.</p>
+			<h1>Rest API</h1>
+			<p>This service provides an API which allows for two possibilities:</p>
+			<ul>
+				<li><a href="http://rdf-translator.appspot.com/parse?url=http%3A%2F%2Fwww.ebusiness-unibw.org&amp;if=rdfa&amp;of=pretty-xml">&quot;url&quot;, &quot;if&quot;, and &quot;of&quot;</a></li>
+				<li><a href="http://rdf-translator.appspot.com/parse?url=http%3A%2F%2Fwww.ebusiness-unibw.org&amp;of=pretty-xml">&quot;url&quot; and &quot;of&quot;, while &quot;if&quot; is determined automatically</a></li>
+			</ul>
+			<p class="note">The underlying pattern is (where the usage of &quot;if&quot; is more restrictive and optional):<br>http://rdf-translator.appspot.com/parse?url=&lt;page_url&gt;&amp;if=&lt;input_format&gt;&amp;of=&lt;output_format&gt;</p>
+		</section>
+	</article>
+	<footer><strong>Developer:</strong> Alex Stolz<br><strong>Disclaimer:</strong> This service is provided by the E-Business and Web Science Research Group at Universität der Bundeswehr München as it is with no explicit or implicit guarantees.</footer>
+</body>
+</html>
