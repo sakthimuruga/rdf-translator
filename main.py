@@ -51,7 +51,7 @@ class ParserHandler(webapp.RequestHandler):
 			if self.response_string.strip() == "":
 				raise Exception
 		except:
-			self.response_string = "ERROR 1: Could not convert from "+input_format+" to "+output_format+" for resource "+page+" ..."
+			self.response_string = "ERROR 1: Could not convert from "+self.input_format+" to "+self.output_format+" for resource "+self.page+" ..."
 			
 		self.response.headers['Content-Length'] = len(self.response_string) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
 		
