@@ -1,3 +1,7 @@
+$(document).ready(function() {
+	$("#tab_container").tabs();
+});
+
 var req = null;
 
 function submit() {
@@ -21,11 +25,24 @@ function submit() {
 	if (req) {
 		informat = document.getElementById("in");
 		outformat = document.getElementById("out");
-		uri = document.getElementById("uri");
-		if(!uri.value)
-			uri.value = "http://www.ebusiness-unibw.org";
-		var query = "?url="+encodeURIComponent(uri.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
-		req.open("GET", "/parse"+query, true);
+		// selected tab
+		var $tabs = $('#tab_container').tabs();
+        var selected = $tabs.tabs('option', 'selected'); // => 0
+        if(selected == 0) {
+		    uri = document.getElementById("uri");
+		    if(!uri.value)
+			    uri.value = "http://www.ebusiness-unibw.org";
+		    var query = "?url="+encodeURIComponent(uri.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
+		    req.open("GET", "/parse"+query, true);
+		    req.send(null);
+		}
+		else if(selected == 1) {
+		    content = document.getElementById("textbox");
+		    var query = "content="+encodeURIComponent(content.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
+		    req.open("POST", "/parse", true);
+		    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		    req.send(query);
+		}
 		//alert(query);
 		document.getElementById("serialization").innerHTML = "<center><progress></progress></center>";
 		req.onreadystatechange = function() {
@@ -38,6 +55,6 @@ function submit() {
 				else document.getElementById("serialization").innerHTML = "<p style='color: red; font-weight: bold; padding-top: 12px'>No response</p>";
 			}
 		}
-		req.send(null);
+		//req.send(null);
 	}
 }

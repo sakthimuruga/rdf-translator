@@ -1,6 +1,7 @@
 body {
 	margin: 0 auto;
 	font-family: Verdana, Helvetica, Arial, sans-serif;
+	font-size: 12px;
 }
 
 :invalid {
@@ -10,6 +11,19 @@ body {
 	-o-box-shadow: 0 0 5px rbba(255, 0, 0, .8);
 	-ms-box-shadow: 0 0 5px rbba(255, 0, 0, .8);
 	box-shadow:0 0 5px rgba(255, 0, 0, .8);
+}
+
+#tab_container {
+    padding: 12px;
+    margin: 24px;
+}
+
+#tab_container ul li {
+	font-size: 11px;
+}
+
+#tabs_box textarea {
+    height: 200px;
 }
 
 .note {
@@ -128,7 +142,7 @@ button {
   -ms-border-radius:5px;
   border-radius:5px;
 	
-	padding: 10px;
+	padding: 12px;
 	color: white;
 }
 button:hover {

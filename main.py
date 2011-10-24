@@ -62,6 +62,40 @@ class ParserHandler(webapp.RequestHandler):
 		self.headandget()
 			
 		self.response.out.write(self.response_string)
+		
+	def post(self):
+		self.content = self.request.get("content")
+		self.input_format = self.request.get("if", default_value="")
+		self.output_format = self.request.get("of", default_value="pretty-xml")
+		
+		if self.output_format == "pretty-xml" or self.output_format == "xml":
+			self.response.headers['Content-Type'] = "application/rdf+xml"
+		elif self.output_format == "n3":
+			self.response.headers['Content-Type'] = "text/n3"
+		elif self.output_format == "nt":
+			self.response.headers['Content-Type'] = "text/plain"
+		elif self.output_format == "trix":
+			self.response.headers['Content-Type'] = "application/xml"
+		else:
+			self.response.headers['Content-Type'] = "text/plain"
+			
+		if not self.input_format:
+			source = create_input_source(data=self.content, format=self.input_format)
+			self.input_format = source.content_type
+		
+		try:
+			#self.response.out.write(self.content)
+			self.response_string = translator.parse(self.content, file_format="string", input_format=self.input_format, output_format=self.output_format)
+			if self.response_string.strip() == "" and self.input_format == "text/html": # fix microdata test
+				self.response_string = translator.parse(self.content, file_format="string", input_format="microdata", output_format=self.output_format)
+			if self.response_string.strip() == "":
+				raise Exception
+		except:
+			self.response_string = "ERROR 1: Could not convert from "+self.input_format+" to "+self.output_format+" for provided resource ..."
+			
+		self.response.headers['Content-Length'] = len(self.response_string) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
+		
+		self.response.out.write(self.response_string)
 
 		
 class MainHandler(webapp.RequestHandler):
