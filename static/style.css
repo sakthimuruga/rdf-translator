@@ -22,7 +22,9 @@ body {
 	font-size: 11px;
 }
 
-#tabs_box textarea {
+#tabs_box textbox {
+    font-family: "Courier New", Arial;
+    font-size: 11px;
     height: 200px;
 }
 
