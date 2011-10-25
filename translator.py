@@ -4,7 +4,12 @@ sys.path.append("lib")
 
 import rdflib
 import rdflib_microdata
-	
+from rdflib.parser import Parser
+from rdflib.serializer import Serializer
+
+rdflib.plugin.register("rdf-json", Parser, "rdfextras.parsers.rdfjson", "RdfJsonParser")
+rdflib.plugin.register("rdf-json", Serializer, "rdfextras.serializers.rdfjson", "RdfJsonSerializer")
+rdflib.plugin.register("rdf-json-pretty", Serializer, "rdfextras.serializers.rdfjson", "PrettyRdfJsonSerializer")
 
 def parse(f, file_format="file", input_format="rdfa", output_format="pretty-xml"):
 	#"""
