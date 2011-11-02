@@ -50,8 +50,8 @@ class ParserHandler(webapp.RequestHandler):
 				self.response_string = translator.parse(self.page, file_format="file", input_format="microdata", output_format=self.output_format)
 			if self.response_string.strip() == "":
 				raise Exception
-		except:
-			self.response_string = "ERROR 1: Could not convert from "+self.input_format+" to "+self.output_format+" for resource "+self.page+" ..."
+		except Exception as e:
+			self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from "+self.input_format+" to "+self.output_format+" for resource "+self.page+"...<br><br>Error Message:<br>%s</p>" %e
 			
 		self.response.headers['Content-Length'] = len(self.response_string) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
 		
@@ -92,8 +92,8 @@ class ParserHandler(webapp.RequestHandler):
 				self.response_string = translator.parse(self.content, file_format="string", input_format="microdata", output_format=self.output_format)
 			if self.response_string.strip() == "":
 				raise Exception
-		except:
-			self.response_string = "ERROR 1: Could not convert from "+self.input_format+" to "+self.output_format+" for provided resource ..."
+		except Exception as e:
+			self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from "+self.input_format+" to "+self.output_format+" for provided resource...<br><br>Error Message:<br>%s</p>" %e
 			
 		self.response.headers['Content-Length'] = len(self.response_string) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
 		

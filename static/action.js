@@ -1,6 +1,67 @@
+$(function() {
+    $("#tab_container").tabs();
+    $("#clip_button").hide();
+});
+
+/*
+$(document).ready(function() {
+    $('#clip_button').mouseover(function(){
+        ZeroClipboard.setMoviePath('/static/zeroclipboard/ZeroClipboard10.swf');
+		clip = new ZeroClipboard.Client();
+		clip.setHandCursor(true);
+		var txt = $('#serialization').text();
+		clip.setText(txt);
+		clip.glue( this );
+		//Add a complete event to let the user know the text was copied
+		clip.addEventListener('complete', function(client, text) {
+		    var txt = $('#serialization').text();
+    		clip.setText(txt);
+    		//alert("copied"+text);
+		    $("#clip_button").html("copied to clipboard").fadeIn("slow").fadeOut(2000);
+		});
+    });
+});
+*/
+
+/*
 $(document).ready(function() {
 	$("#tab_container").tabs();
+	$("#clip_button").hide();
+	
+	// copy to clipboard
+	ZeroClipboard.setMoviePath('/static/zeroclipboard/ZeroClipboard10.swf');
+	$("#clip_button").click(function() {
+        var clip = new ZeroClipboard.Client();
+        //clip.setHandCursor( true );
+        
+        clip.glue( 'clip_button' );
+        
+        clip.setText($('#serialization').text());
+        
+    	//clip.addEventListener('load', function (client) {
+    	//	debugstr("Flash movie loaded and ready.");
+    	//});
+
+    	//clip.addEventListener('mouseOver', function (client) {
+    		// update the text on mouse over
+    	//	clip.setText( $('#serialization').text() );
+    	//});
+	
+    	clip.addEventListener('complete', function (client, text) {
+    		debugstr("Copied text to clipboard: " + text );
+    		$("#clip_button").html("copied to clipboard");
+    	});
+	});
 });
+
+
+function debugstr(msg) {
+	var p = document.createElement('p');
+	p.innerHTML = msg;
+	$('#debug').append(p);
+}
+*/
+
 
 var req = null;
 
@@ -44,17 +105,27 @@ function submit() {
 		    req.send(query);
 		}
 		//alert(query);
-		document.getElementById("serialization").innerHTML = "<center><progress></progress></center>";
+		$("#clip_button").html("<strong>Copy To Clipboard...</strong>");
+		document.getElementById("progressbar").innerHTML = "<center><progress></progress></center>";
+		document.getElementById("progressbar").style.display = "block";
+		document.getElementById("serialization").style.display = "none";
+		document.getElementById("clip_button").style.display = "none";
 		req.onreadystatechange = function() {
 			//alert(req.readyState);
 			if (req.readyState == 4) {
 				//alert(req.status);
 				if (req.status == 200) {
-					document.getElementById("serialization").innerHTML = "<textarea>"+req.responseText+"</textarea>";
+					document.getElementById("serialization").innerHTML = req.responseText;
+					document.getElementById("serialization").style.display = "block";
+					document.getElementById("progressbar").style.display = "none";
+					document.getElementById("clip_button").style.display = "block";
 				}
-				else document.getElementById("serialization").innerHTML = "<p style='color: red; font-weight: bold; padding-top: 12px'>No response</p>";
+				else {
+				    document.getElementById("progressbar").innerHTML = "<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response</p>";
+				}
 			}
 		}
 		//req.send(null);
 	}
+	return false;
 }
