@@ -266,3 +266,15 @@ a:hover {
 #clip_button.active {
     color: white;
 }
+
+.shade_box {
+    background-color: #eee;
+    padding: 6px 12px 6px 12px;
+    border: #ddd solid 1px;
+    
+    -moz-box-shadow: 0 3px 10px rgba(180, 180, 180, .3);
+	-webkit-box-shadow: 0 3px 10px rbba(180, 180, 180, .3);
+	-o-box-shadow: 0 3px 10px rbba(180, 180, 180, .3);
+	-ms-box-shadow: 0 3px 10px rbba(180, 180, 180, .3);
+	box-shadow: 0 3px 10px rgba(180, 180, 180, .3);
+}
