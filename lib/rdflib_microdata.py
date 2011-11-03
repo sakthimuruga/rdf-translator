@@ -59,7 +59,7 @@ class MicrodataParser(Parser):
 		# go through each property/value and add triples to the graph
 		for item_property, item_values in item.props.items():
 			if item_property.find("/") > 0:
-				p = item_property
+				p = URIRef(item_property)
 			else:
 				p = ns[item_property]
 			for v in item_values:
