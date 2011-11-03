@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
 sys.path.append("lib")
 
@@ -13,11 +14,15 @@ rdflib.plugin.register("rdf-json-pretty", Serializer, "rdfextras.serializers.rdf
 
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw
+from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, JavascriptLexer
 
 def pygmentize(text, format):
     if format == "n3" or format == "nt":
         lexer = sw.Notation3Lexer()
+    elif format == "pretty-xml" or format == "xml" or format == "trix":
+        lexer = XmlLexer()
+    elif format == "rdf-json" or format == "rdf-json-pretty":
+        lexer = JavascriptLexer()
     else:
         lexer = guess_lexer(text)
     return highlight(text, lexer, HtmlFormatter())
