@@ -41,6 +41,7 @@ def parse(f, file_format="file", input_format="rdfa", output_format="pretty-xml"
         "vvo": "http://purl.org/vvo/ns#",
         "fab": "http://purl.org/fab/ns#",
         "xro": "http://www.stalsoft.com/ontologies/xro/ns#",
+        "xhv": "http://www.w3.org/1999/xhtml/vocab#",
         "s": "http://schema.org/"}
 
     for key, value in dict.items(ontology_uris):
