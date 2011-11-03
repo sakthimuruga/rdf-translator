@@ -129,3 +129,4 @@ if __name__ == '__main__':
 	
 	
 # hack: quoted os.getpid() in rdflib.plugins.parsers.notation3
+# set cache-control header in rdflib.parser headers dict to: 'Cache-Control': 'max-age=10' # set by AS
