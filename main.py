@@ -22,6 +22,7 @@ from google.appengine.ext.webapp import util
 
 import translator
 from rdflib.parser import create_input_source
+import logging
 
 import sys
 reload(sys)
@@ -89,6 +90,7 @@ class ParserHandler(webapp.RequestHandler):
         self.response.out.write(self.response_string)       
 
 def main():
+    logging.getLogger().setLevel(logging.INFO)
     application = webapp.WSGIApplication([
                                         ('/parse', ParserHandler)],
                                          debug=True)
@@ -103,3 +105,7 @@ if __name__ == '__main__':
 # hack: quoted os.getpid() in rdflib.plugins.parsers.notation3
 # set cache-control header in rdflib.parser headers dict to: 'Cache-Control': 'max-age=10' # set by AS
 # minor changes to rdflib/rdflib-microdata
+# rdfextras.serializers.rdfjson.py:141
+## srlzd = json.dumps(self.jsonObj, indent=2)
+## -->
+## srlzd = json.dumps(self.jsonObj, indent=2, ensure_ascii=False)

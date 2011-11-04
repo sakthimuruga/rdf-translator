@@ -93,8 +93,8 @@
 				<li><a href="http://rdf-translator.appspot.com/parse?url=http%3A%2F%2Fwww.ebusiness-unibw.org&amp;of=pretty-xml">&quot;url&quot; and &quot;of&quot;, while &quot;if&quot; is determined automatically</a></li>
 			</ul>
 			<p class="note">The API pattern is as follows (where the usage of &quot;if&quot; is more restrictive and optional):<br>http://rdf-translator.appspot.com/parse?url=&lt;page_url&gt;&amp;if=&lt;input_format&gt;&amp;of=&lt;output_format&gt;</p>
-			<p><strong>if</strong> = [ <em>rdfa | microdata | n3 | nt | xml | rdf-json | trix</em> ]</p>
-			<p><strong>of</strong> = <em>pretty-xml | xml | n3 | nt | rdf-json-pretty | rdf-json | trix</em></p>
+			<p><strong>if</strong> = [ <em>rdfa | microdata | xml | n3 | nt | rdf-json | trix</em> ]</p>
+			<p><strong>of</strong> = <em>rdfa | microdata | pretty-xml | xml | n3 | nt | rdf-json-pretty | rdf-json | trix</em></p>
 			<h1>License and Source Code</h1>
 			<p>The source code of this tool is available under a <a href="http://www.gnu.org/licenses/lgpl.html">LPGL</a> license from <a href="https://bitbucket.org/alexstolz/rdf-translator">here</a>.</p>
 			<p>This service is built on top of <a href="http://code.google.com/p/rdflib/">RDFLib 3.1.0</a>, an RDF library which allows to parse and serialize between data formats. For the translation between microdata and the other file formats it is using <a href="https://github.com/edsu/rdflib-microdata">Ed Summers' microdata plugin</a>, for RDF/JSON the plugin as available in the RDFLib add-on package <a href="http://code.google.com/p/rdfextras/">RDFExtras</a>.</p>
