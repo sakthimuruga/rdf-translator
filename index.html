@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>{{title}}</title>
+	<title>RDF Translator</title>
 	<link rel="stylesheet" type="text/css" href="/static/style.css"/>
 	<link rel="stylesheet" type="text/css" href="/static/pygments.css"/>
 	<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css"/>
@@ -39,14 +39,16 @@
 					<option value="">... automatically</option>
 					<option value="rdfa">RDFa</option>
 					<option value="microdata">Microdata</option>
+					<option value="xml">RDF/XML</option>
 					<option value="n3">N3</option>
 					<option value="nt">N-Triples</option>
-					<option value="xml">RDF/XML</option>
 					<option value="rdf-json">RDF/JSON</option>
 					<option value="trix">Trix</option>
 				</select>
 				<label>Output</label>
 				<select id="out">
+					<option value="rdfa">RDFa</option>
+					<option value="microdata">Microdata</option>
 					<option value="pretty-xml">Abbreviated RDF/XML</option>
 					<option value="xml">RDF/XML</option>
 					<option value="n3">N3</option>

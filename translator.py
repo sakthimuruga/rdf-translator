@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 import sys
 sys.path.append("lib")
 
@@ -16,6 +16,46 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, JavascriptLexer
 
+from google.appengine.api import urlfetch
+
+import urllib
+import httplib
+
+def createSnippet(inputrdf, format="rdfa"):
+    # test connection
+    HOST1 = False
+    result = urlfetch.fetch(url="http://rhizomik.net:80/")
+    if result.status_code == 200:
+        HOST1 = True
+    
+    # prepare form fields and headers
+    form_fields = {
+        "rdf": inputrdf,
+        "mode": "snippet"
+    }
+    form_data = urllib.urlencode(form_fields)
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "text/plain"
+    }
+    
+    response = None
+    if HOST1:
+        response = urlfetch.fetch(url="http://rhizomik.net:80/redefer-services/rdf2%s" % format,
+            payload=form_data,
+            method=urlfetch.POST,
+            headers=headers)
+    else:
+        response = urlfetch.fetch(url="http://rhizomik-redefer.appspot.com:80/rdf2%s" % format,
+            payload=form_data,
+            method=urlfetch.POST,
+            headers=headers)
+            
+    if response and response.status_code == 200:
+        return response.content
+    return ""
+
+
 def pygmentize(text, format):
     if format == "n3" or format == "nt":
         lexer = sw.Notation3Lexer()
@@ -27,8 +67,13 @@ def pygmentize(text, format):
         lexer = guess_lexer(text)
     return highlight(text, lexer, HtmlFormatter())
 
-def parse(f, file_format="file", input_format="rdfa", output_format="pretty-xml"):
-    #"""
+def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", output_format="pretty-xml"):
+    
+    final_format = None
+    if output_format == "rdfa" or output_format == "microdata":
+        final_format = output_format
+        output_format = "pretty-xml"
+    
     g = rdflib.Graph()
     
     ontology_uris = {
@@ -58,7 +103,14 @@ def parse(f, file_format="file", input_format="rdfa", output_format="pretty-xml"
         g.parse(f, format=input_format)
     
     if len(g) > 0:
-        return pygmentize(g.serialize(format=output_format), output_format)
+        serialization = g.serialize(format=output_format).decode("UTF-8")
+        if final_format:
+            rdf = g.serialize(format=output_format).decode("UTF-8")
+            serialization = createSnippet(rdf, final_format)
+        
+        if do_pygmentize:
+            return pygmentize(serialization, output_format)
+        else:
+            return serialization
     else:
         return ""
-    #"""

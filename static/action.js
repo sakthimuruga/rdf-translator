@@ -89,21 +89,22 @@ function submit() {
 		// selected tab
 		var $tabs = $('#tab_container').tabs();
         var selected = $tabs.tabs('option', 'selected'); // => 0
+        
+        var query = ""
         if(selected == 0) {
 		    uri = document.getElementById("uri");
 		    if(!uri.value)
 			    uri.value = "http://www.ebusiness-unibw.org";
-		    var query = "?url="+encodeURIComponent(uri.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
-		    req.open("GET", "/parse"+query, true);
-		    req.send(null);
+		    query = "url="+encodeURIComponent(uri.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
 		}
 		else if(selected == 1) {
 		    content = document.getElementById("textbox");
-		    var query = "content="+encodeURIComponent(content.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
-		    req.open("POST", "/parse", true);
-		    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-		    req.send(query);
+		    query = "content="+encodeURIComponent(content.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
 		}
+		req.open("POST", "/parse", true);
+	    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	    req.send(query);
+		
 		//alert(query);
 		$("#clip_button").html("<strong>Copy To Clipboard...</strong>");
 		document.getElementById("progressbar").innerHTML = "<center><progress></progress></center>";
