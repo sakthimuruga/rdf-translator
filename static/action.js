@@ -1,6 +1,24 @@
 $(function() {
     $("#tab_container").tabs();
     $("#clip_button").hide();
+    /*
+    $("#example_rdfa").click(function(){
+        $("#textbox").load("/static/examples/rdfa.tmpl");
+        $("#in").val("rdfa");
+        return false;
+    });
+    */
+    $(".example").each(function() {
+       $(this).click(function() {
+          $.get("/static/examples/"+$(this).attr("name")+".tmpl", function(data) {
+              $("#textbox").html(data);
+          });
+          //$("#textbox").load("/static/examples/"+$(this).attr("name")+".tmpl");
+          $("#in").val($(this).attr("name"));
+          return false; 
+       });
+    });
+    
 });
 
 /*

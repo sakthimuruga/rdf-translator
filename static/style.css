@@ -24,10 +24,25 @@ body {
 	font-size: 11px;
 }
 
-#tabs_box textbox {
-    font-family: "Courier New", Arial;
-    font-size: 11px;
-    height: 200px;
+#tabs_box #textbox {
+    font-family: monospace, "Courier New", Courier;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    margin: 0 auto;
+    width: 840px;
+    height: 400px;
+    display: block;
+    min-height: 30px;
+    margin-bottom: 15px;
+    margin-top: 5px;
+    outline: none;
+    cursor: pointer;
+
+    -webkit-border-radius:5px;
+    -moz-border-radius:5px;
+    -o-border-radius:5px;
+    -ms-border-radius:5px;
+    border-radius:5px;
 }
 
 .note {
@@ -103,27 +118,6 @@ section {
     margin: 0 auto;
     display: none;
     width: 910px;
-}
-
-textarea {
-  font-family: "Courier New", Arial;
-  margin: 0 auto;
-  border: 1px solid #ccc;
-  font-size: 11px;
-  width: 640px;
-  height: 480px;
-  display: block;
-  min-height: 30px;
-  margin-bottom: 15px;
-  margin-top: 5px;
-  outline: none;
-  cursor: pointer;
-
-  -webkit-border-radius:5px;
-  -moz-border-radius:5px;
-  -o-border-radius:5px;
-  -ms-border-radius:5px;
-  border-radius:5px;
 }
 
 pre {
@@ -206,12 +200,12 @@ h2 {
     padding-top: 24px;
 }
 
-a {
+a, #tabs_box a {
     color: #f16f32;
     text-decoration: none;
 }
 
-a:hover {
+a:hover, #tabs_box a:hover {
     color: #f99f72;
     text-decoration: underline;
 }

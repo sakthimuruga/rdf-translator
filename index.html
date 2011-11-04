@@ -30,7 +30,8 @@
 				<input type="text" id="uri" name="uri" required pattern="http(s)?://.+" title="Expect an HTTP address" placeholder="http://www.ebusiness-unibw.org">
 			</div>
 			<div id="tabs_box">
-				<textarea id="textbox" name="textbox" placeholder="... enter text here" cols="10" rows="4"></textarea>
+				<textarea id="textbox" name="textbox" placeholder="... enter text here"></textarea>
+				<p>Examples: <a class="example" name="rdfa" href="#">RDFa</a> - <a class="example" name="microdata" href="#">Microdata</a> - <a class="example" name="xml" href="#">RDF/XML</a> - <a class="example" name="n3" href="#">N3</a> - <a class="example" name="nt" href="#">N-Triples</a> - <a class="example" name="rdf-json" href="#">RDF/JSON</a></p>
 			</div>
 			<button type="button" onclick="submit()">Submit</button>
 			<div id="settings">
@@ -43,7 +44,6 @@
 					<option value="n3">N3</option>
 					<option value="nt">N-Triples</option>
 					<option value="rdf-json">RDF/JSON</option>
-					<option value="trix">Trix</option>
 				</select>
 				<label>Output</label>
 				<select id="out">
