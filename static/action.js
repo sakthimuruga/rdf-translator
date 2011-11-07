@@ -140,7 +140,7 @@ function submit() {
 					document.getElementById("clip_button").style.display = "block";
 				}
 				else {
-				    document.getElementById("progressbar").innerHTML = "<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response: Either the entered URI does not exist or the server is temporarily down. Please try again later or contact the developers by filling in the Feedback form.</p>";
+				    document.getElementById("progressbar").innerHTML = "<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response: Either the entered URI does not exist or the service is temporarily unavailable. Please try again later or contact the developers by filling in the Feedback form.</p>";
 				}
 			}
 		}

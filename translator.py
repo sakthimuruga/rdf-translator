@@ -2,6 +2,7 @@
 # encoding: utf-8
 import sys
 sys.path.append("lib")
+import re
 
 import rdflib
 import rdflib_microdata
@@ -102,9 +103,12 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
     global known_vocabs
     
     final_format = None
+    base = ""
+    
     if output_format == "rdfa" or output_format == "microdata":
         final_format = output_format
         output_format = "pretty-xml"
+        base = "http://rdf-translator.appspot.com"
     
     g = rdflib.Graph()
 
@@ -113,9 +117,9 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
             g.bind(key, value)
     
     if file_format == "string":
-        g.parse(data=f, format=input_format)
+        g.parse(data=f, format=input_format, publicID=base)
     else:
-        g.parse(f, format=input_format)
+        g.parse(f, format=input_format, publicID=base)
     
     if len(g) > 0:
         serialization = g.serialize(format=output_format).decode("UTF-8")
@@ -150,9 +154,9 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
                     g.bind(key, value)
             
                 if file_format == "string":
-                    g.parse(data=f, format=input_format)
+                    g.parse(data=f, format=input_format, publicID=base)
                 else:
-                    g.parse(f, format=input_format)
+                    g.parse(f, format=input_format, publicID=base)
                             
                 serialization = g.serialize(format=output_format).decode("UTF-8")           
         
@@ -160,6 +164,7 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
         if final_format:
             rdf = g.serialize(format=output_format).decode("UTF-8")
             serialization = createSnippet(rdf, final_format).decode("UTF-8")
+            serialization = re.sub("http://rdf-translator.appspot.com", "", serialization)
         
         if do_pygmentize:
             return pygmentize(serialization, output_format)
