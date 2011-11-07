@@ -31,6 +31,8 @@ sys.setdefaultencoding("utf-8")
 class ParserHandler(webapp.RequestHandler):
     def processRequest(self):
         self.page = self.request.get("url")
+        if self.page and not self.page.find("://") > 0:
+            self.page = "http://%s" % self.page
         self.content = self.request.get("content")
         self.input_format = self.request.get("if")
         self.output_format = self.request.get("of", default_value="pretty-xml")
@@ -113,3 +115,4 @@ if __name__ == '__main__':
 ## tree = parser.parse(location)
 ## -->
 ## tree = parser.parse(location, encoding="utf-8")
+# rdfextras/parsers/rdfjson.py:116, added val=None, because otherwise it raises sometimes the exception "local variable val referenced before assignment"

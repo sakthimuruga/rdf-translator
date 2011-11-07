@@ -1,5 +1,4 @@
 # RdfJsonSerializer.py
-# encoding: utf-8
 # Author: Rob Sanderson
 # RDFLib 3.1 compatibility updates: Richard Jones
 
@@ -174,9 +173,9 @@ class RdfJsonSerializer(Serializer):
     def value(self, objt):
         data = {}
         if isinstance(objt, Literal):
-            data['type'] = u'literal'
+            data['type'] = 'literal'
             if objt.language:
-                data['lang'] = unicode(objt.language)
+                data['lang'] = objt.language
             if objt.datatype:
                 data['datatype'] = objt.datatype
             data['value'] = objt

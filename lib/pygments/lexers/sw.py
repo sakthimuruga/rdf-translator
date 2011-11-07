@@ -63,7 +63,7 @@ class Notation3Lexer(RegexLexer):
             (r'\s*".*?[^\\]"(?:\@[a-z]{2-4}|\^\^<?[a-zA-Z0-9\-\:_#/\.]*>?)?\s*', Literal.String),
             (r'\s*[a-zA-Z0-9\-_\:]\s*', Name.Attribute),
             (r'\s*\(', Text, 'objList'),
-            (r'\s*;\s*\n?', Text, '#pop'),
+            (r'\s*[;,]\s*\n?', Text, '#pop'),
             (r'(?=\s*\])', Text, '#pop'),            
             (r'(?=\s*\.)', Text, '#pop'),           
         ],

@@ -113,6 +113,7 @@ class RdfJsonParser(Parser):
                         pred = URIRef(p)
                         
                     for vh in v:
+                        val = None
                         value = vh['value']
                         vt = vh['type']
                         if vt == 'literal':
@@ -127,6 +128,6 @@ class RdfJsonParser(Parser):
                         elif vt == 'uri':
                             val = URIRef(value)
                         elif vt == 'bnode':
-                            val = BNode(val[2:])
+                            val = BNode(value[2:])
                         sink.add((s, pred, val))
         # returns None
