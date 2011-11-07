@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# encoding: utf-8
 """
 This rdflib plugin lets you parse html5 microdata into an RDF graph. You 
 shouldn't have to use this module directly, since it's a plugin. You'll just 

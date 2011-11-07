@@ -109,3 +109,7 @@ if __name__ == '__main__':
 ## srlzd = json.dumps(self.jsonObj, indent=2)
 ## -->
 ## srlzd = json.dumps(self.jsonObj, indent=2, ensure_ascii=False)
+# microdata.py:18:
+## tree = parser.parse(location)
+## -->
+## tree = parser.parse(location, encoding="utf-8")

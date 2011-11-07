@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# encoding: utf-8
 import html5lib
 
 try:
@@ -13,7 +15,7 @@ def get_items(location):
     """
     dom_builder = html5lib.treebuilders.getTreeBuilder("dom")
     parser = html5lib.HTMLParser(tree=dom_builder)
-    tree = parser.parse(location)
+    tree = parser.parse(location, encoding="utf-8")
     return _find_items(tree)
 
 
