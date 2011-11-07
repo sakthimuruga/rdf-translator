@@ -103,12 +103,12 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
     global known_vocabs
     
     final_format = None
-    base = ""
+    base = None
     
     if output_format == "rdfa" or output_format == "microdata":
         final_format = output_format
         output_format = "pretty-xml"
-        base = "http://rdf-translator.appspot.com"
+        base = "http://rdf-translator.appspot.com/"
     
     g = rdflib.Graph()
 
@@ -164,7 +164,6 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
         if final_format:
             rdf = g.serialize(format=output_format).decode("UTF-8")
             serialization = createSnippet(rdf, final_format).decode("UTF-8")
-            serialization = re.sub("http://rdf-translator.appspot.com", "", serialization)
         
         if do_pygmentize:
             return pygmentize(serialization, output_format)
