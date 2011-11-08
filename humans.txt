@@ -20,6 +20,10 @@
   IDE: TextMate, GAE, Gimp
 
 /* SPECIAL THANKS */
+  Financial Supporter: German Federal Ministry of Research (BMBF)
+  Site: http://www.bmbf.de/en/
+  Location: Berlin, Germany
+
   Feedback Loop: Uwe Stoll, László Török, Bene Rodriguez-Castro
   Location: Neubiberg, Germany
 
