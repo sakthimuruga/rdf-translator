@@ -1,0 +1,26 @@
+/* TEAM */
+  Develop & Main Design: Alex Stolz
+  Twitter: @stalsoft
+  Site: http://www.stalsoft.com/
+  Location: Neubiberg, Germany
+
+  Technical Advisor: Martin Hepp
+  Twitter: @mfhepp
+  Site: http://www.heppnetz.de/
+  Location: Neubiberg, Germany
+
+  Standard Man: Andreas Radinger
+  Site: http://www.unibw.de/ebusiness/team/andreas-radinger/
+  Location: Neubiberg, Germany
+
+/* SITE */
+  Last update: 11/08/2011
+  Language: English
+  Doctype: HTML5, CSS3
+  IDE: TextMate, GAE, Gimp
+
+/* SPECIAL THANKS */
+  Feedback Loop: Uwe Stoll, László Török, Bene Rodriguez-Castro
+  Location: Neubiberg, Germany
+
+  And, of course, all people who submitted valuable feedback and suggestions for improvement!

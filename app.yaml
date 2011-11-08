@@ -12,4 +12,16 @@ handlers:
 
 - url: /
   static_files: index.html
-  upload: index.html
+  upload: index\.html
+
+- url: /favicon\.ico
+  static_files: static/favicon.ico
+  upload: static/favicon\.ico
+  
+- url: /robots\.txt
+  static_files: robots.txt
+  upload: robots\.txt
+  
+- url: /humans\.txt
+  static_files: humans.txt
+  upload: humans\.txt
