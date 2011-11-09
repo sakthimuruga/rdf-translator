@@ -116,3 +116,7 @@ if __name__ == '__main__':
 ## -->
 ## tree = parser.parse(location, encoding="utf-8")
 # rdfextras/parsers/rdfjson.py:116, added val=None, because otherwise it raises sometimes the exception "local variable val referenced before assignment"
+# rdflib/plugins/parsers/notation3.py:811
+## langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)?')
+## -->
+## langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*')
