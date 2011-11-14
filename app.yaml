@@ -1,14 +1,15 @@
-application: rdf-translator
+application: rdf-translator2
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 - url: /static
   static_dir: static
 
 - url: /parse
-  script: main.py
+  script: main.application
 
 - url: /
   static_files: index.html

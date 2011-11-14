@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 import sys
 sys.path.append("lib")
@@ -19,7 +18,11 @@ from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, J
 
 from google.appengine.api import urlfetch
 import urllib
-import simplejson as json
+
+try:
+  import json
+except ImportError:
+  import simplejson as json
 
 import logging
 

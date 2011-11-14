@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 #
 # Copyright 2007 Google Inc.
@@ -91,16 +90,19 @@ class ParserHandler(webapp.RequestHandler):
         self.processRequest()
         self.response.out.write(self.response_string)       
 
+
+application = webapp.WSGIApplication([
+    ('/parse', ParserHandler)],
+             debug=True)
+
 def main():
     logging.getLogger().setLevel(logging.INFO)
-    application = webapp.WSGIApplication([
-                                        ('/parse', ParserHandler)],
-                                         debug=True)
     util.run_wsgi_app(application)
 
 
-if __name__ == '__main__':
-    main()
+# not needed in python 2.7 appengine (http://blog.notdot.net/2011/10/Migrating-to-Python-2-7-part-1-Threadsafe)
+#if __name__ == '__main__':
+#    main()
     
     
     
@@ -116,3 +118,7 @@ if __name__ == '__main__':
 ## -->
 ## tree = parser.parse(location, encoding="utf-8")
 # rdfextras/parsers/rdfjson.py:116, added val=None, because otherwise it raises sometimes the exception "local variable val referenced before assignment"
+# rdflib/plugins/parsers/notation3.py:811
+## langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)?')
+## -->
+## langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*')
