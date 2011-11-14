@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>RDF Translator</title>
+	<link type="text/plain" rel="author" href="http://rdf-translator.appspot.com/humans.txt"/>
+	<link rel="stylesheet" type="text/css" href="/static/style.css"/>
+	<link rel="stylesheet" type="text/css" href="/static/pygments.css"/>
+	<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css"/>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="/static/zeroclipboard/ZeroClipboard.js"></script>
+	<script type="text/javascript" src="/static/action.js"></script>
+	<meta name="author" content="Alex Stolz">
+	<!-- Date: 2011-10-14 -->
+</head>
+<body>
+	<!--<div id="debug"><h2>Debug Console:</h2></div>-->
+	<header><strong>RDF Translator</strong>, powered by RDFLib 3.1.0</header>
+	<div id="box">
+		<section>
+			<p class="shade_box"><strong>RDF Translator</strong> is a multi-format conversion tool for structured markup. It provides translations between data formats ranging from RDF/XML to RDFa or Microdata. The service allows for conversions triggered either by URI or by direct text input. Furthermore it comes with a straightforward REST API for developers.</p>
+		</section>
+		<div id="tab_container">
+			<ul>
+				<li><a href="#tabs_uri">URI</a></li>
+				<li><a href="#tabs_box">Input Field</a></li>
+			</ul>
+			<div id="tabs_uri">
+				<input type="text" id="uri" name="uri" required pattern="http(s)?://.+" title="Expecting an address similar to <scheme>://<host>/<path>" placeholder="http://www.ebusiness-unibw.org">
+			</div>
+			<div id="tabs_box">
+				<textarea id="textbox" name="textbox" placeholder="... enter text here"></textarea>
+				<p>Examples: <a class="example" name="rdfa" href="#">RDFa</a> - <a class="example" name="microdata" href="#">Microdata</a> - <a class="example" name="xml" href="#">RDF/XML</a> - <a class="example" name="n3" href="#">N3</a> - <a class="example" name="nt" href="#">N-Triples</a> - <a class="example" name="rdf-json" href="#">RDF/JSON</a></p>
+			</div>
+			<button type="button" onclick="submit()">Submit</button>
+			<div id="settings">
+				<label>Input</label>
+				<select id="in">
+					<option value="">... automatically</option>
+					<option value="rdfa">RDFa</option>
+					<option value="microdata">Microdata</option>
+					<option value="xml">RDF/XML</option>
+					<option value="n3">N3</option>
+					<option value="nt">N-Triples</option>
+					<option value="rdf-json">RDF/JSON</option>
+				</select>
+				<label>Output</label>
+				<select id="out">
+					<option value="rdfa">RDFa</option>
+					<option value="microdata">Microdata</option>
+					<option value="pretty-xml">Abbreviated RDF/XML</option>
+					<option value="xml">RDF/XML</option>
+					<option value="n3">N3</option>
+					<option value="nt">N-Triples</option>
+					<option value="rdf-json-pretty">Abbreviated RDF/JSON</option>
+					<option value="rdf-json">RDF/JSON</option>
+					<option value="trix">Trix</option>
+				</select>
+			</div>
+		</div>
+		<div id="progressbar"></div>
+		<div id="clip_container">
+			<div id="clip_button" class="clip_button_class"><strong>Copy To Clipboard...</strong></div>
+		</div>
+		<script type="text/javascript">
+		<!--
+			ZeroClipboard.setMoviePath('/static/zeroclipboard/ZeroClipboard10.swf');
+			var clip = new ZeroClipboard.Client();
+			clip.setText('');
+			clip.setHandCursor(true);
+			clip.addEventListener("onLoad", function(client) {
+			    //alert("loaded");
+			});
+			clip.addEventListener("onMouseDown", function(client) {
+			    var txt = $('#serialization').text();
+			    clip.setText(txt);
+			});
+			//Add a complete event to let the user know the text was copied
+			clip.addEventListener('onComplete', function(client, text) {
+			    //alert("Copied text to clipboard:\n" + text);
+				$("#clip_button").html("...copied to clipboard").fadeIn("slow").fadeOut(2000);
+			});
+			clip.glue( 'clip_button', 'clip_container' );
+		-->
+		</script>
+		<div id="serialization"></div>
+		<section>
+			<h1>Rest API</h1>
+			<p>This service provides an easily accessible API which allows for two variants:</p>
+			<ul>
+				<li><a href="http://rdf-translator.appspot.com/parse?url=http%3A%2F%2Fwww.ebusiness-unibw.org&amp;if=rdfa&amp;of=pretty-xml">&quot;url&quot;, &quot;if&quot;, and &quot;of&quot;</a></li>
+				<li><a href="http://rdf-translator.appspot.com/parse?url=http%3A%2F%2Fwww.ebusiness-unibw.org&amp;of=pretty-xml">&quot;url&quot; and &quot;of&quot;, while &quot;if&quot; is determined automatically</a></li>
+			</ul>
+			<p class="note">The API pattern is as follows (where the usage of &quot;if&quot; is more restrictive and optional):<br>http://rdf-translator.appspot.com/parse?url=&lt;page_url&gt;&amp;if=&lt;input_format&gt;&amp;of=&lt;output_format&gt;</p>
+			<p><strong>if</strong> = [ <em>rdfa | microdata | xml | n3 | nt | rdf-json | trix</em> ]</p>
+			<p><strong>of</strong> = <em>rdfa | microdata | pretty-xml | xml | n3 | nt | rdf-json-pretty | rdf-json | trix</em></p>
+			<h1>License and Source Code</h1>
+			<p>The source code of this tool is available under a <a href="http://www.gnu.org/licenses/lgpl.html">LPGL</a> license from <a href="https://bitbucket.org/alexstolz/rdf-translator">here</a>.</p>
+			<p>This service is built on top of <a href="http://code.google.com/p/rdflib/">RDFLib 3.1.0</a>, an RDF library which allows to parse and serialize between data formats. For the translation between Microdata and other file formats it is using <a href="https://github.com/edsu/rdflib-microdata">Ed Summers' Microdata plugin</a>, for RDF/JSON the plugin as available in the RDFLib add-on package <a href="http://code.google.com/p/rdfextras/">RDFExtras</a>. The conversion to RDFa and Microdata is borrowed from preliminary works done in <a href="http://www.ebusiness-unibw.org/tools/rdf2rdfa/">RDF2RDFa</a> and <a href="http://www.ebusiness-unibw.org/tools/rdf2microdata/">RDF2Microdata</a>, both service frontends to a converter package developed by Roberto García in the <a href="http://rhizomik.net/html/redefer/">ReDeFer project</a>. Unknown namespace prefixes are tried to determine automatically using the <a href="http://prefix.cc">prefix.cc</a> namespace lookup of Richard Cyganiak.</p>
+			<h1>Contact</h1>
+			<p>
+				Univ.-Prof. Dr. Martin Hepp<br>
+				E-Business and Web Science Research Group, Chair of General Management and E-Business<br>
+				Universität der Bundeswehr München<br>
+				Werner-Heisenberg-Weg 39<br>
+				D-85579 Neubiberg, Germany
+			</p>
+			<p>
+				<strong>Phone:</strong> +49-89-6004-4217<br>
+				<strong>E-mail:</strong> tools (at) ebusiness-unibw.org<br>
+				<a href="http://www.unibw.de/ebusiness/">http://www.unibw.de/ebusiness/</a>
+			</p>
+			<h1>Acknowledgements</h1>
+			<p>Thanks to Martin Hepp and Andreas Radinger for valuable feedback and substantial contributions to this project.</p>
+			<p>The work on RDF Translator has been supported by the <a href="http://www.bmbf.de/en/">German Federal Ministry of Research (BMBF)</a> by a grant under the KMU Innovativ program as part of the <a href="http://www.intelligent-match.de/">Intelligent Match project</a> (FKZ 01IS10022B).</p>
+			<div id="banner">
+				<div id="researchgroup"><a href="http://www.ebusiness-unibw.org/"><img src="/static/logo_researchgroup.png" alt="E-Business and Web Science Research Group"/></a></div>
+				<div id="bmbf"><a href="http://www.bmbf.de/en/"><img src="/static/bmbf.png" alt="BMBF logo"/></a></div>
+			</div>
+		</section>
+	</div>
+	<footer><strong>Developer:</strong> Alex Stolz<br><strong>Disclaimer:</strong> This service is provided by the E-Business and Web Science Research Group at Universität der Bundeswehr München as it is with no explicit or implicit guarantees.</footer>
+	<style type='text/css'>@import url('http://getbarometer.s3.amazonaws.com/assets/barometer/css/barometer.css');</style>
+	<script src='http://getbarometer.s3.amazonaws.com/assets/barometer/javascripts/barometer.js' type='text/javascript'></script>
+	<script type="text/javascript" charset="utf-8">
+	  BAROMETER.load('yBNjWW7GeTq1qx4DTZ1hf');
+	</script>
+</body>
+</html>
