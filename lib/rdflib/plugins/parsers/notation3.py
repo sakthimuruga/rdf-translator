@@ -808,7 +808,7 @@ signed_integer = re.compile(r'[-+]?[0-9]+')     # integer
 number_syntax = re.compile(r'(?P<integer>[-+]?[0-9]+)(?P<decimal>\.[0-9]+)?(?P<exponent>e[-+]?[0-9]+)?')
 digitstring = re.compile(r'[0-9]+')             # Unsigned integer      
 interesting = re.compile(r'[\\\r\n\"]')
-langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*')
+langcode = re.compile(r'[a-zA-Z]+(-[a-zA-Z0-9]+){0,2}')
 #"
 
 
