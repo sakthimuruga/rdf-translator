@@ -120,6 +120,11 @@ section {
     width: 910px;
 }
 
+#converter_link {
+    margin: 0 auto;
+    width: 910px;
+}
+
 pre {
     font-family: Courier, 'Courier New', monospace;
     line-height: 1.4em;

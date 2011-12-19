@@ -109,15 +109,18 @@ function submit() {
         var selected = $tabs.tabs('option', 'selected'); // => 0
         
         var query = ""
+        var link = ""
         if(selected == 0) {
 		    uri = document.getElementById("uri");
 		    if(!uri.value)
 			    uri.value = "http://www.ebusiness-unibw.org";
 		    query = "url="+encodeURIComponent(uri.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
+            link = "Link to <a href='http://rdf-translator.appspot.com/parse?"+query+"'>Persistent URI</a>.";
 		}
 		else if(selected == 1) {
 		    content = document.getElementById("textbox");
 		    query = "content="+encodeURIComponent(content.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
+            link = "Link to <a href='http://rdf-translator.appspot.com/parse?"+query+"'>Persistent URI</a>.";
 		}
 		req.open("POST", "/parse", true);
 	    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -125,6 +128,8 @@ function submit() {
 		
 		//alert(query);
 		$("#clip_button").html("<strong>Copy To Clipboard...</strong>");
+		document.getElementById("converter_link").innerHTML = "";
+	    document.getElementById("converter_link").style.display = "none";
 		document.getElementById("progressbar").innerHTML = "<center><progress></progress></center>";
 		document.getElementById("progressbar").style.display = "block";
 		document.getElementById("serialization").style.display = "none";
@@ -134,6 +139,8 @@ function submit() {
 			if (req.readyState == 4) {
 				//alert(req.status);
 				if (req.status == 200) {
+				    document.getElementById("converter_link").innerHTML = link;
+				    document.getElementById("converter_link").style.display = "block";
 					document.getElementById("serialization").innerHTML = req.responseText;
 					document.getElementById("serialization").style.display = "block";
 					document.getElementById("progressbar").style.display = "none";
