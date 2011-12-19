@@ -120,7 +120,7 @@ function submit() {
 		else if(selected == 1) {
 		    content = document.getElementById("textbox");
 		    query = "content="+encodeURIComponent(content.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
-            link = "Link to <a href='http://rdf-translator.appspot.com/parse?"+query+"'>Persistent URI</a>.";
+            //link = "Link to <a href='http://rdf-translator.appspot.com/parse?"+query+"'>Persistent URI</a>.";
 		}
 		req.open("POST", "/parse", true);
 	    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
