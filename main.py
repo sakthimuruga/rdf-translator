@@ -58,7 +58,7 @@ class ParserHandler(webapp.RequestHandler):
                 self.input_format = source.content_type
                 
         try:
-            self.response_string = self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Translation failed</p>"
+            self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Translation failed</p>"
             if self.content:
                 self.response_string = translator.parse(self.content, do_pygmentize=self.do_pygmentize, file_format="string", input_format=self.input_format, output_format=self.output_format)
                 if self.response_string.strip() == "" and self.input_format == "text/html": # fix microdata test
@@ -73,16 +73,14 @@ class ParserHandler(webapp.RequestHandler):
             self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.input_format, self.output_format, str(e))
             
         self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
-    
-    def headandget(self):
+        
+    def head(self):
         self.do_pygmentize = False
         self.processRequest()
         
-    def head(self):
-        self.headandget()
-        
     def get(self):
-        self.headandget()
+        self.do_pygmentize = False
+        self.processRequest()
         self.response.out.write(self.response_string)
         
     def post(self):

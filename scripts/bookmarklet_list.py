@@ -59,13 +59,13 @@ def main():
             emphasis_i = " style=\"text-decoration: underline\""
         f.write("<td%(emphasis)s>%(name)s</td>" % {"emphasis":emphasis_i, "name":i})
         for o in output_formats:
-            if i == "auto-detect":
+            if "detect" in i:
                 f.write("""
         <td style="width:70px">
             <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;of=%(of)s';">
-                <img src="static/bookmark.png" alt="auto-detect -> %(of)s" title="auto-detect to %(of)s" />
+                <img src="static/bookmark.png" alt="%(detect)s -> %(of)s" title="%(detect)s to %(of)s" />
             </a>
-        </td>""" %{"service":service, "of":o})
+        </td>""" %{"service":service, "of":o, "detect":i})
             else:
                 f.write("""
         <td style="width:70px">
