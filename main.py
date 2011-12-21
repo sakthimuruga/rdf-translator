@@ -83,12 +83,12 @@ class ParserHandler(webapp.RequestHandler):
 <html>
     <head>
     	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    	<title>RDF Translator: %s pygmentized</title>
+    	<title>RDF Translator - %s of %s</title>
     	<link rel="stylesheet" type="text/css" href="/static/pygments.css"/>
     	<meta name="author" content="Alex Stolz">
     </head>
     <body>
-""" % self.output_format
+""" % (self.output_format, self.page)
             self.response_string = header + self.response_string + """
     </body>
 </html>"""
