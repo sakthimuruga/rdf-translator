@@ -202,8 +202,8 @@ class TurtleSerializer(RecursiveSerializer):
 
         pfx = self.store.store.prefix(uri)
         # in no case try to make a prefix if gen_prefix==False
-        if not gen_prefix and pfx is None:
-            return None
+        #if not gen_prefix and pfx is None:
+        #    return None
         try:
             parts = self.store.compute_qname(uri)
         except Exception, e:
