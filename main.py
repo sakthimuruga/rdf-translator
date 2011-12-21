@@ -34,20 +34,24 @@ class ParserHandler(webapp.RequestHandler):
             self.page = "http://%s" % self.page
         self.content = self.request.get("content")
         self.input_format = self.request.get("if")
-        self.output_format = self.request.get("of", default_value="pretty-xml")
-        
-        if self.output_format == "pretty-xml" or self.output_format == "xml":
-            self.response.headers['Content-Type'] = "application/rdf+xml"
-        elif self.output_format == "n3":
-            self.response.headers['Content-Type'] = "text/n3"
-        elif self.output_format == "nt":
-            self.response.headers['Content-Type'] = "text/plain"
-        elif self.output_format == "trix":
-            self.response.headers['Content-Type'] = "application/xml"
-        elif self.output_format == "rdf-json" or self.output_format == "rdf-json-pretty":
-            self.response.headers['Content-Type'] = "application/json"
+        self.output_format = self.request.get("of")
+        self.html = self.request.get("html")
+        if self.html not in [None, "FALSE", "False", "false", "0"]:
+            self.do_pygmentize = True
+            self.response.headers['Content-Type'] = "text/html"
         else:
-            self.response.headers['Content-Type'] = "text/plain"
+            if self.output_format == "pretty-xml" or self.output_format == "xml":
+                self.response.headers['Content-Type'] = "application/rdf+xml"
+            elif self.output_format == "n3":
+                self.response.headers['Content-Type'] = "text/n3"
+            elif self.output_format == "nt":
+                self.response.headers['Content-Type'] = "text/plain"
+            elif self.output_format == "trix":
+                self.response.headers['Content-Type'] = "application/xml"
+            elif self.output_format == "rdf-json" or self.output_format == "rdf-json-pretty":
+                self.response.headers['Content-Type'] = "application/json"
+            else:
+                self.response.headers['Content-Type'] = "text/plain"
             
         if not self.input_format:
             if self.content:
@@ -73,7 +77,22 @@ class ParserHandler(webapp.RequestHandler):
             self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.input_format, self.output_format, str(e))
             
         self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
-        
+
+        if self.html not in [None, "FALSE", "False", "false", "0"]:
+            header = """<!DOCTYPE html>
+<html>
+    <head>
+    	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    	<title>RDF Translator: %s pygmentized</title>
+    	<link rel="stylesheet" type="text/css" href="/static/pygments.css"/>
+    	<meta name="author" content="Alex Stolz">
+    </head>
+    <body>
+""" % self.output_format
+            self.response_string = header + self.response_string + """
+    </body>
+</html>"""
+              
     def head(self):
         self.do_pygmentize = False
         self.processRequest()

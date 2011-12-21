@@ -142,6 +142,22 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
         g.parse(data=f, format=input_format, publicID=base)
     else:
         g.parse(f, format=input_format, publicID=base)
+        # NOTE: has no effect with current RDFLib version, because it shows full URIs for subjects and objects
+        #d = dict()
+        #for s in g.subjects(None, None):
+        #    base = None
+        #    split_hash = s.rsplit("#")
+        #    split_slash = s.rsplit("/")
+        #    if len(split_hash) > 1:
+        #        base = split_hash[0]
+        #    elif len(split_slash) > 1:
+        #        base = split_slash[0]
+        #    if base in d:
+        #        d[base] += 1
+        #    else:
+        #        d[base] = 0
+                
+        #ns_sorted = sorted(d.items(), key=lambda x: x[1], reverse=True)
     
     if len(g) > 0:
         serialization = g.serialize(format=output_format).decode("UTF-8")
@@ -162,7 +178,6 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
                                     
             # for pretty-xml the same
             elif output_format == "pretty-xml" or output_format == "xml":
-                import re
                 for m in re.finditer(r"xmlns:[a-zA-Z0-9]+=\"?([^\"]*)", serialization):
                     #logging.info(m.group(1))
                     url = m.group(1)
@@ -178,6 +193,10 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
                 if file_format == "string":
                     g.parse(data=f, format=input_format, publicID=base)
                 else:
+                    # NOTE: has no effect with current RDFLib version
+                    #it = iter(xrange(len(ns_sorted)))
+                    #for item in ns_sorted:
+                    #    g.bind("ns%d"%it.next(), item)
                     g.parse(f, format=input_format, publicID=base)
                             
                 serialization = g.serialize(format=output_format).decode("UTF-8")           
