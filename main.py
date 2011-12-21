@@ -36,7 +36,7 @@ class ParserHandler(webapp.RequestHandler):
         self.input_format = self.request.get("if")
         self.output_format = self.request.get("of")
         self.html = self.request.get("html")
-        if self.html not in [None, "FALSE", "False", "false", "0"]:
+        if self.html == "1":
             self.do_pygmentize = True
             self.response.headers['Content-Type'] = "text/html"
         else:
@@ -78,7 +78,7 @@ class ParserHandler(webapp.RequestHandler):
             
         self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
 
-        if self.html not in [None, "FALSE", "False", "false", "0"]:
+        if self.html == "1":
             header = """<!DOCTYPE html>
 <html>
     <head>
@@ -139,3 +139,5 @@ def main():
 ## langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)?')
 ## -->
 ## langcode = re.compile(r'[a-zA-Z]+(-[a-zA-Z0-9]+){0,2}')
+# rdflib/plugins/serializers/turtle.py:205
+## commented lines for the creation of prefixes -> qnames for subjects and objects

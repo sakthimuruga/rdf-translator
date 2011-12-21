@@ -62,14 +62,14 @@ def main():
             if "detect" in i:
                 f.write("""
         <td style="width:70px">
-            <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;of=%(of)s&amp;html';">
+            <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;of=%(of)s&amp;html=1';">
                 <img src="static/bookmark.png" alt="%(detect)s -> %(of)s" title="%(detect)s to %(of)s" />
             </a>
         </td>""" %{"service":service, "of":o, "detect":i})
             else:
                 f.write("""
         <td style="width:70px">
-            <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;if=%(if)s&amp;of=%(of)s&amp;html';">
+            <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;if=%(if)s&amp;of=%(of)s&amp;html=1';">
                 <img src="static/bookmark.png" alt="%(if)s -> %(of)s" title="%(if)s to %(of)s" />
             </a>
         </td>""" %{"service":service, "if":i, "of":o})
