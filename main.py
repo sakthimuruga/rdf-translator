@@ -76,7 +76,8 @@ class ParserHandler(webapp.RequestHandler):
         except Exception, e:
             self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.input_format, self.output_format, str(e))
             
-        self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
+        #self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*") # enable CORS
 
         if self.html == "1":
             header = """<!DOCTYPE html>
@@ -85,6 +86,22 @@ class ParserHandler(webapp.RequestHandler):
     	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     	<title>RDF Translator - %s of %s</title>
     	<link rel="stylesheet" type="text/css" href="/static/pygments.css"/>
+    	<style type="text/css">
+    	<!--
+    	body {
+    	  margin: 0 auto;
+    	  paddin: 0
+    	}
+    	div, pre {
+    	  margin: 0;
+    	  padding: 0;
+    	}
+    	.highlight {
+    	  padding: 12px;
+    	  background-color: #FFFFFF;
+    	}
+    	-->
+    	</style>
     	<meta name="author" content="Alex Stolz">
     </head>
     <body>

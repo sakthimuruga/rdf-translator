@@ -16,19 +16,19 @@ import warnings
 from urllib import pathname2url, url2pathname
 from urllib2 import urlopen, Request, HTTPError
 from urlparse import urljoin
-from StringIO import StringIO
+try:
+    from io import BytesIO
+except:
+    from StringIO import StringIO as BytesIO
 from xml.sax import xmlreader
 from xml.sax.saxutils import prepare_input_source
 import types
-try:
-    _StringTypes = (types.StringType, types.UnicodeType)
-except AttributeError:
-    _StringTypes = (types.StringType,)
 
 from rdflib import __version__
 from rdflib.term import URIRef
 from rdflib.namespace import Namespace
 
+__all__ = ['Parser', 'InputSource', 'StringInputSource', 'URLInputSource', 'FileInputSource']
 
 class Parser(object):
 
@@ -56,7 +56,7 @@ class StringInputSource(InputSource):
 
     def __init__(self, value, system_id=None):
         super(StringInputSource, self).__init__(system_id)
-        stream = StringIO(value)
+        stream = BytesIO(value)
         self.setByteStream(stream)
         # TODO:
         #   encoding = value.encoding
@@ -65,7 +65,7 @@ class StringInputSource(InputSource):
 
 headers = {
     'User-agent': 'rdflib-%s (http://rdflib.net/; eikeon@eikeon.com)' % __version__,
-    'Cache-Control': 'max-age=10' # set by AS
+    'Cache-control': 'max-age=10'
     }
 
 
@@ -90,11 +90,7 @@ class URLInputSource(InputSource):
             myheaders['Accept']='application/rdf+xml,text/rdf+n3;q=0.9,application/xhtml+xml;q=0.5, */*;q=0.1'
         
         req = Request(system_id, None, myheaders)
-        try:
-            file = urlopen(req)
-        except HTTPError, e:
-            # TODO:
-            raise Exception('"%s" while trying to open "%s"' % (e, self.url))
+        file = urlopen(req)
         self.content_type = file.info().get('content-type')
         self.content_type = self.content_type.split(";", 1)[0]
         self.setByteStream(file)
@@ -137,7 +133,7 @@ def create_input_source(source=None, publicID=None,
         if isinstance(source, InputSource):
             input_source = source
         else:
-            if isinstance(source, _StringTypes):
+            if isinstance(source, basestring):
                 location = source
             elif hasattr(source, "read") and not isinstance(source, Namespace):
                 f = source
@@ -153,7 +149,7 @@ def create_input_source(source=None, publicID=None,
         absolute_location = URIRef(location, base=base).defrag()
         if absolute_location.startswith("file:///"):
             filename = url2pathname(absolute_location.replace("file:///", "/"))
-            file = __builtin__.file(filename, "rb")
+            file = open(filename, "rb")
         else:
             input_source = URLInputSource(absolute_location, format)
         publicID = publicID or absolute_location

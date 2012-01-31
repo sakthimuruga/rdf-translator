@@ -1,9 +1,28 @@
 """
-This module defines the different types of terms...
+This module defines the different types of terms. Terms are the kinds of 
+objects that can appear in a quoted/asserted triple. This includes those 
+that are core to RDF:
+
+* Blank Nodes
+* URI References
+* Literals (which consist of a literal value,datatype and language tag)
+
+Those that extend the RDF model into N3:
+
+* Formulae
+* Universal Quantifications (Variables)
+
+And those that are primarily for matching against 'Nodes' in the underlying Graph:
+
+* REGEX Expressions
+* Date Ranges
+* Numerical Ranges
 
 """
 
 __all__ = [
+    'bind',
+    
     'Node',
     'Identifier',
 
@@ -20,30 +39,22 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 import base64
-import re
 
 import threading
 from urlparse import urlparse, urljoin, urldefrag
-from string import ascii_letters, rsplit
+from string import ascii_letters
 from random import choice
 from itertools import islice
-from datetime import date, time, datetime, timedelta
-from time import strptime
+from datetime import date, time, datetime
+from isodate import parse_time, parse_date, parse_datetime
 
 try:
     from hashlib import md5
 except ImportError:
     from md5 import md5
 
-# from sys import version_info
-# if version_info[0:2] > (2, 2):
-#     from unicodedata import normalize
-# else:
-#     normalize = None
-#
-#from rdflib.syntax.xml_names import is_ncname
-#from rdflib.exceptions import Error
-
+import py3compat
+b = py3compat.b
 
 class Node(object):
     """
@@ -92,7 +103,7 @@ class URIRef(Identifier):
 
     def concrete(self):
         if "#" in self:
-            return URIRef("/".join(rsplit(self, "#", 1)))
+            return URIRef("/".join(self.rsplit("#", 1)))
         else:
             return self
 
@@ -100,7 +111,7 @@ class URIRef(Identifier):
         if "#" not in self:
             scheme, netloc, path, params, query, fragment = urlparse(self)
             if path:
-                return URIRef("#".join(rsplit(self, "/", 1)))
+                return URIRef("#".join(self.rsplit("/", 1)))
             else:
                 if not self.endswith("#"):
                     return URIRef("%s#" % self)
@@ -132,9 +143,13 @@ class URIRef(Identifier):
             return unicode(self)==unicode(other)
         else:
             return False
+    
+    def __hash__(self):
+        return hash(URIRef) ^ hash(unicode(self))
 
-    def __str__(self):
-        return self.encode()
+    if not py3compat.PY3:
+        def __str__(self):
+            return self.encode()
 
     def __repr__(self):
         if self.__class__ is URIRef:
@@ -153,8 +168,8 @@ class URIRef(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
-        d = md5(str(self))
-        d.update("U")
+        d = md5(self.encode())
+        d.update(b("U"))
         return d.hexdigest()
 
 
@@ -236,9 +251,13 @@ class BNode(Identifier):
             return unicode(self)==unicode(other)
         else:
             return False
+    
+    def __hash__(self):
+        return hash(BNode) ^ hash(unicode(self))
 
-    def __str__(self):
-        return self.encode()
+    if not py3compat.PY3:
+        def __str__(self):
+            return self.encode()
 
     def __repr__(self):
         if self.__class__ is BNode:
@@ -254,19 +273,19 @@ class BNode(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
-        d = md5(str(self))
-        d.update("B")
+        d = md5(self.encode())
+        d.update(b("B"))
         return d.hexdigest()
 
 
 class Literal(Identifier):
-    """
+    doc = """
     RDF Literal: http://www.w3.org/TR/rdf-concepts/#section-Graph-Literal
 
     >>> Literal(1).toPython()
-    1L
-    >>> cmp(Literal("adsf"), 1)
-    1
+    1%(L)s
+    >>> Literal("adsf") > 1
+    True
     >>> from rdflib.namespace import XSD
     >>> lit2006 = Literal('2006-01-01',datatype=XSD.date)
     >>> lit2006.toPython()
@@ -298,6 +317,7 @@ class Literal(Identifier):
     >>> "2005" < lit2006
     True
     """
+    __doc__ = py3compat.format_doctest_out(doc)
 
     __slots__ = ("language", "datatype", "_cmp_value")
 
@@ -314,6 +334,8 @@ class Literal(Identifier):
                 lang = None
         if datatype:
             datatype = URIRef(datatype)
+        if py3compat.PY3 and isinstance(value, bytes):
+            value = value.decode('utf-8')
         try:
             inst = unicode.__new__(cls, value)
         except UnicodeDecodeError:
@@ -334,12 +356,13 @@ class Literal(Identifier):
         self.language = d["language"]
         self.datatype = d["datatype"]
 
+    @py3compat.format_doctest_out
     def __add__(self, val):
         """
         >>> Literal(1) + 1
-        2L
+        2%(L)s
         >>> Literal("1") + "1"
-        rdflib.term.Literal(u'11')
+        rdflib.term.Literal(%(u)s'11')
         """
 
         py = self.toPython()
@@ -349,10 +372,102 @@ class Literal(Identifier):
         else:
             return py + val
 
+    @py3compat.format_doctest_out
+    def __neg__(self):
+        """
+        >>> (- Literal(1))
+        -1%(L)s
+        >>> (- Literal(10.5))
+        -10.5
+        >>> from rdflib.namespace import XSD
+        >>> (- Literal("1", datatype=XSD['integer']))
+        -1%(L)s
+        
+        Not working:
+        #>>> (- Literal("1"))
+        #Traceback (most recent call last):
+        #  File "<stdin>", line 1, in <module>
+        #TypeError: Not a number; rdflib.term.Literal(u'1')
+        >>> 
+        """
+
+        py = self.toPython()
+        try:
+            return py.__neg__()
+        except Exception, e:
+            raise TypeError("Not a number; %s" % repr(self))
+
+    @py3compat.format_doctest_out
+    def __pos__(self):
+        """
+        >>> (+ Literal(1))
+        1%(L)s
+        >>> (+ Literal(-1))
+        -1%(L)s
+        >>> from rdflib.namespace import XSD
+        >>> (+ Literal("-1", datatype=XSD['integer']))
+        -1%(L)s
+        
+        Not working in Python 3:
+        #>>> (+ Literal("1"))
+        #Traceback (most recent call last):
+        #  File "<stdin>", line 1, in <module>
+        #TypeError: Not a number; rdflib.term.Literal(u'1')
+        """
+        py = self.toPython()
+        try:
+            return py.__pos__()
+        except Exception, e:
+            raise TypeError("Not a number; %s" % repr(self))
+
+    @py3compat.format_doctest_out
+    def __abs__(self):
+        """
+        >>> abs(Literal(-1))
+        1%(L)s
+        >>> from rdflib.namespace import XSD
+        >>> abs( Literal("-1", datatype=XSD['integer']))
+        1%(L)s
+        
+        Not working in Python 3:
+        #>>> abs(Literal("1"))
+        #Traceback (most recent call last):
+        #  File "<stdin>", line 1, in <module>
+        #TypeError: Not a number; rdflib.term.Literal(u'1')
+        """
+        py = self.toPython()
+        try:
+            return py.__abs__()
+        except Exception, e:
+            raise TypeError("Not a number; %s" % repr(self))
+
+    @py3compat.format_doctest_out
+    def __invert__(self):
+        """
+        >>> ~(Literal(-1))
+        0%(L)s
+        >>> from rdflib.namespace import XSD
+        >>> ~( Literal("-1", datatype=XSD['integer']))
+        0%(L)s
+        
+        Not working:
+        #>>> ~(Literal("1"))
+        #Traceback (most recent call last):
+        #  File "<stdin>", line 1, in <module>
+        #TypeError: Not a number; rdflib.term.Literal(u'1')
+        >>> 
+        """
+        py = self.toPython()
+        try:
+            return py.__invert__()
+        except Exception:
+            raise TypeError("Not a number; %s" % repr(self))
+
+    @py3compat.format_doctest_out
     def __lt__(self, other):
         """
         >>> from rdflib.namespace import XSD
-        >>> Literal("YXNkZg==", datatype=XSD[u'base64Binary']) < "foo"
+        >>> Literal("YXNkZg==", datatype=XSD['base64Binary']) < "foo"
         True
         >>> u"\xfe" < Literal(u"foo")
         False
@@ -364,13 +479,20 @@ class Literal(Identifier):
             return False # Nothing is less than None
         try:
             return self._cmp_value < other
-        except TypeError, te:
-            return unicode(self._cmp_value) < other
         except UnicodeDecodeError, ue:
-            if isinstance(self._cmp_value, str):
+            if isinstance(self._cmp_value, py3compat.bytestype):
                 return self._cmp_value < other.encode("utf-8")
             else:
                 raise ue
+        except TypeError:
+            try:
+                # On Python 3, comparing bytes/str is a TypeError, not a UnicodeError
+                if isinstance(self._cmp_value, py3compat.bytestype):
+                    return self._cmp_value < other.encode("utf-8")
+                return unicode(self._cmp_value) < other
+            except (TypeError, AttributeError):
+                # Treat different types like Python 2 for now.
+                return py3compat.type_cmp(self._cmp_value, other) == -1
 
     def __le__(self, other):
         """
@@ -390,13 +512,20 @@ class Literal(Identifier):
             return True # Everything is greater than None
         try:
             return self._cmp_value > other
-        except TypeError, te:
-            return unicode(self._cmp_value) > other
         except UnicodeDecodeError, ue:
-            if isinstance(self._cmp_value, str):
+            if isinstance(self._cmp_value, py3compat.bytestype):
                 return self._cmp_value > other.encode("utf-8")
             else:
                 raise ue
+        except TypeError:
+            try:
+                # On Python 3, comparing bytes/str is a TypeError, not a UnicodeError
+                if isinstance(self._cmp_value, py3compat.bytestype):
+                    return self._cmp_value > other.encode("utf-8")
+                return unicode(self._cmp_value) > other
+            except (TypeError, AttributeError):
+                # Treat different types like Python 2 for now.
+                return py3compat.type_cmp(self._cmp_value, other) == 1
 
     def __ge__(self, other):
         if other is None:
@@ -413,7 +542,7 @@ class Literal(Identifier):
 
         >>> Literal('') != None
         True
-        >>> Literal('2') <> Literal('2')
+        >>> Literal('2') != Literal('2')
         False
 
         """
@@ -449,6 +578,7 @@ class Literal(Identifier):
         
         return Identifier.__hash__(self) ^ hash(self.language) ^ hash(self.datatype)
 
+    @py3compat.format_doctest_out
     def __eq__(self, other):
         """
         >>> f = URIRef("foo")
@@ -469,7 +599,7 @@ class Literal(Identifier):
         >>> oneNoDtype = Literal('1')
         >>> oneInt == oneNoDtype
         False
-        >>> Literal("1", XSD[u'string']) == Literal("1", XSD[u'string'])
+        >>> Literal("1", XSD['string']) == Literal("1", XSD['string'])
         True
         >>> Literal("one", lang="en") == Literal("one", lang="en")
         True
@@ -492,6 +622,7 @@ class Literal(Identifier):
         else:
             return self._cmp_value == other
 
+    @py3compat.format_doctest_out
     def n3(self):
         r'''
         Returns a representation in the N3 format.
@@ -499,75 +630,76 @@ class Literal(Identifier):
         Examples::
 
             >>> Literal("foo").n3()
-            u'"foo"'
+            %(u)s'"foo"'
 
         Strings with newlines or triple-quotes::
 
             >>> Literal("foo\nbar").n3()
-            u'"""foo\nbar"""'
+            %(u)s'"""foo\nbar"""'
 
             >>> Literal("''\'").n3()
-            u'"\'\'\'"'
+            %(u)s'"\'\'\'"'
 
             >>> Literal('"""').n3()
-            u'"\\"\\"\\""'
+            %(u)s'"\\"\\"\\""'
 
         Language::
 
             >>> Literal("hello", lang="en").n3()
-            u'"hello"@en'
+            %(u)s'"hello"@en'
 
         Datatypes::
 
             >>> Literal(1).n3()
-            u'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
+            %(u)s'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
 
             >>> Literal(1, lang="en").n3()
-            u'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
+            %(u)s'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
 
             >>> Literal(1.0).n3()
-            u'"1.0"^^<http://www.w3.org/2001/XMLSchema#float>'
+            %(u)s'"1.0"^^<http://www.w3.org/2001/XMLSchema#float>'
 
         Datatype and language isn't allowed (datatype takes precedence)::
 
             >>> Literal(True).n3()
-            u'"true"^^<http://www.w3.org/2001/XMLSchema#boolean>'
+            %(u)s'"true"^^<http://www.w3.org/2001/XMLSchema#boolean>'
 
         Custom datatype::
 
             >>> footype = URIRef("http://example.org/ns#foo")
             >>> Literal("1", datatype=footype).n3()
-            u'"1"^^<http://example.org/ns#foo>'
+            %(u)s'"1"^^<http://example.org/ns#foo>'
 
         '''
         return self._literal_n3()
 
+    @py3compat.format_doctest_out
     def _literal_n3(self, use_plain=False, qname_callback=None):
         '''
         Using plain literal (shorthand) output::
 
             >>> Literal(1)._literal_n3(use_plain=True)
-            u'1'
+            %(u)s'1'
 
             >>> Literal(1.0)._literal_n3(use_plain=True)
-            u'1.0'
+            %(u)s'1.0'
 
             >>> from rdflib.namespace import XSD
             >>> Literal("foo", datatype=XSD.string)._literal_n3(
             ...         use_plain=True)
-            u'"foo"^^<http://www.w3.org/2001/XMLSchema#string>'
+            %(u)s'"foo"^^<http://www.w3.org/2001/XMLSchema#string>'
 
             >>> Literal(True)._literal_n3(use_plain=True)
-            u'true'
+            %(u)s'true'
 
             >>> Literal(False)._literal_n3(use_plain=True)
-            u'false'
+            %(u)s'false'
 
         Using callback for datatype QNames::
 
             >>> Literal(1)._literal_n3(
-            ...         qname_callback=lambda uri: u"xsd:integer")
-            u'"1"^^xsd:integer'
+            ...         qname_callback=lambda uri: "xsd:integer")
+            %(u)s'"1"^^xsd:integer'
 
         '''
         if use_plain and self.datatype in _PLAIN_LITERAL_TYPES:
@@ -615,7 +747,7 @@ class Literal(Identifier):
             encoded = self.replace('\\', '\\\\')
             if '"""' in self:
                 # is this ok?
-                encoded = encoded.replace('"""','\\"""')
+                encoded = encoded.replace('"""','\\"\\"\\"')
             if encoded.endswith('"'):
                 encoded = encoded[:-1] + "\\\""
             return '"""%s"""' % encoded
@@ -623,8 +755,9 @@ class Literal(Identifier):
             return '"%s"' % self.replace('\n','\\n').replace('\\', '\\\\'
                             ).replace('"', '\\"')
 
-    def __str__(self):
-        return self.encode()
+    if not py3compat.PY3:
+        def __str__(self):
+            return self.encode()
 
     def __repr__(self):
         args = [super(Literal, self).__repr__()]
@@ -672,8 +805,8 @@ class Literal(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
-        d = md5(str(self))
-        d.update("L")
+        d = md5(self.encode())
+        d.update(b("L"))
         return d.hexdigest()
 
 
@@ -703,6 +836,8 @@ def _castPythonToLiteral(obj):
                 return obj, None
     return obj, None # TODO: is this right for the fall through case?
 
+from decimal import Decimal
+
 # Mappings from Python types to XSD datatypes and back (burrowed from sparta)
 # datetime instances are also instances of date... so we need to order these.
 _PythonToXSD = [
@@ -711,70 +846,22 @@ _PythonToXSD = [
     (bool      , (lambda i:str(i).lower(), URIRef(_XSD_PFX+'boolean'))),
     (int       , (None, URIRef(_XSD_PFX+'integer'))),
     (long      , (None, URIRef(_XSD_PFX+'long'))),
+    (Decimal   , (None, URIRef(_XSD_PFX+'decimal'))),
     (datetime  , (lambda i:i.isoformat(), URIRef(_XSD_PFX+'dateTime'))),
     (date      , (lambda i:i.isoformat(), URIRef(_XSD_PFX+'date'))),
     (time      , (lambda i:i.isoformat(), URIRef(_XSD_PFX+'time'))),
 ]
 
-def _strToTime(v) :
-    return strptime(v, "%H:%M:%S")
-
-def _strToDate(v) :
-    tstr = strptime(v, "%Y-%m-%d")
-    return date(tstr.tm_year, tstr.tm_mon, tstr.tm_mday)
-
-def _strToDateTime(v) :
-    """
-    Attempt to cast to datetime, or just return the string (otherwise)
-    """
-    try:
-        tstr = strptime(v, "%Y-%m-%dT%H:%M:%S")
-    except:
-        try:
-            tstr = strptime(v, "%Y-%m-%dT%H:%M:%SZ")
-        except:
-            try:
-                tstr = strptime(v, "%Y-%m-%dT%H:%M:%S%Z")
-            except:
-                try:
-                    # %f only works in python 2.6
-                    # in 2.5 a ValueError will be raised, and we still return 
-                    # just the string
-                    return datetime.strptime(v, "%Y-%m-%dT%H:%M:%S.%f")
-                except:
-                    try:
-                        # %f only works in python 2.6
-                        return datetime.strptime(v, "%Y-%m-%dT%H:%M:%S.%fZ")
-                    except:
-                        try:
-                            # %f only works in python 2.6
-                            # HACK split off the timezone offset
-                            #  works for "2011-01-16T19:39:18.239743+01:00"
-                            m = re.match(r'(.*)([-+])(\d{2}):(\d{2})$',
-                                         v).groups()
-                            d = datetime.strptime(m[0], "%Y-%m-%dT%H:%M:%S.%f")
-                            t = timedelta(hours=int(m[2]), seconds=int(m[3]))
-                            if m[1] == '+':
-                                d += t
-                            else:
-                                d -= t
-                            return d
-                        except:
-                            return v
-
-    return datetime(tstr.tm_year, tstr.tm_mon, tstr.tm_mday,
-                    tstr.tm_hour, tstr.tm_min, tstr.tm_sec)
-
 XSDToPython = {
-    URIRef(_XSD_PFX+'time')               : _strToTime,
-    URIRef(_XSD_PFX+'date')               : _strToDate,
-    URIRef(_XSD_PFX+'dateTime')           : _strToDateTime,
+    URIRef(_XSD_PFX+'time')               : parse_time,
+    URIRef(_XSD_PFX+'date')               : parse_date,
+    URIRef(_XSD_PFX+'dateTime')           : parse_datetime,
     URIRef(_XSD_PFX+'string')             : None,
     URIRef(_XSD_PFX+'normalizedString')   : None,
     URIRef(_XSD_PFX+'token')              : None,
     URIRef(_XSD_PFX+'language')           : None,
     URIRef(_XSD_PFX+'boolean')            : lambda i:i.lower() in ['1','true'],
-    URIRef(_XSD_PFX+'decimal')            : float,
+    URIRef(_XSD_PFX+'decimal')            : Decimal,
     URIRef(_XSD_PFX+'integer')            : long,
     URIRef(_XSD_PFX+'nonPositiveInteger') : int,
     URIRef(_XSD_PFX+'long')               : long,
@@ -790,7 +877,7 @@ XSDToPython = {
     URIRef(_XSD_PFX+'unsignedByte')       : int,
     URIRef(_XSD_PFX+'float')              : float,
     URIRef(_XSD_PFX+'double')             : float,
-    URIRef(_XSD_PFX+'base64Binary')       : base64.decodestring,
+    URIRef(_XSD_PFX+'base64Binary')       : lambda s: base64.b64decode(py3compat.b(s)),
     URIRef(_XSD_PFX+'anyURI')             : None,
 }
 
@@ -814,6 +901,7 @@ class Variable(Identifier):
     """
     __slots__ = ()
     def __new__(cls, value):
+        if len(value)==0: raise Exception("Attempted to create variable with empty string as name!")
         if value[0]=='?':
             value=value[1:]
         return unicode.__new__(cls, value)
@@ -834,8 +922,8 @@ class Variable(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
-        d = md5(str(self))
-        d.update("V")
+        d = md5(self.encode())
+        d.update(b("V"))
         return d.hexdigest()
 
 
