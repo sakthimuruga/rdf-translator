@@ -26,13 +26,17 @@ See the `setuptools dynamic discovery of services and plugins`__ for more inform
 from rdflib.store import Store
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
-from rdflib import query
+from rdflib.query import ResultParser, ResultSerializer
 from rdflib.exceptions import Error
 
+__all__ = ['register', 'get', 'plugins', 'PluginException', 'Plugin', 'PKGPlugin']
 
 entry_points = {'rdf.plugins.store': Store,
                 'rdf.plugins.serializer': Serializer,
-                'rdf.plugins.parser': Parser}
+                'rdf.plugins.parser': Parser,
+                'rdf.plugins.resultparser': ResultParser,
+                'rdf.plugins.resultserializer': ResultSerializer,
+                }
 
 _plugins = {}
 
@@ -132,6 +136,8 @@ register('pretty-xml', Serializer,
                 'rdflib.plugins.serializers.rdfxml', 'PrettyXMLSerializer')
 register('trix', Serializer,
                 'rdflib.plugins.serializers.trix', 'TriXSerializer')
+register("nquads", Serializer, 
+                 'rdflib.plugins.serializers.nquads', 'NQuadsSerializer')
 
 register('application/rdf+xml', Parser,
                 'rdflib.plugins.parsers.rdfxml', 'RDFXMLParser')
@@ -150,3 +156,4 @@ register('trix', Parser,
 register('rdfa', Parser, 
                 'rdflib.plugins.parsers.rdfa', 'RDFaParser')
 
+register("nquads", Parser, "rdflib.plugins.parsers.nquads", "NQuadsParser")

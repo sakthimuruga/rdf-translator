@@ -5,14 +5,17 @@ from rdflib.plugins.serializers.xmlwriter import XMLWriter
 from rdflib.namespace import Namespace, RDF, RDFS, split_uri
 
 from rdflib.term import URIRef, Literal, BNode
-from rdflib.util import first, uniq, more_than
+from rdflib.util import first, more_than
 from rdflib.collection import Collection
 from rdflib.serializer import Serializer
 
 from rdflib.exceptions import Error
 
+from rdflib.py3compat import b
+
 from xml.sax.saxutils import quoteattr, escape
 
+__all__ = ['fix', 'XMLSerializer', 'PrettyXMLSerializer']
 
 class XMLSerializer(Serializer):
 
@@ -23,7 +26,7 @@ class XMLSerializer(Serializer):
         store = self.store
         nm = store.namespace_manager
         bindings = {}
-        for predicate in uniq(store.predicates()):
+        for predicate in set(store.predicates()):
             prefix, namespace, name = nm.compute_qname(predicate)
             bindings[prefix] = URIRef(namespace)
         RDFNS = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -47,6 +50,9 @@ class XMLSerializer(Serializer):
 
         # startRDF
         write('<rdf:RDF\n')
+        # If provided, write xml:base attribute for the RDF
+        if "xml_base" in args:
+            write('   xml:base="%s"\n' % args['xml_base'])
         # TODO: assert(namespaces["http://www.w3.org/1999/02/22-rdf-syntax-ns#"]=='rdf')
         bindings = list(self.__bindings())
         bindings.sort()
@@ -116,6 +122,7 @@ class XMLSerializer(Serializer):
 
 
 XMLLANG = "http://www.w3.org/XML/1998/namespacelang"
+XMLBASE = "http://www.w3.org/XML/1998/namespacebase"
 OWL_NS = Namespace('http://www.w3.org/2002/07/owl#')
 
 # TODO:
@@ -144,12 +151,14 @@ class PrettyXMLSerializer(Serializer):
         self.writer = writer = XMLWriter(stream, nm, encoding)
 
         namespaces = {}
-        possible = uniq(store.predicates()) + uniq(store.objects(None, RDF.type))
+        possible = set(store.predicates()).union(store.objects(None, RDF.type))
         for predicate in possible:
             prefix, namespace, local = nm.compute_qname(predicate)
             namespaces[prefix] = namespace
         namespaces["rdf"] = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
         writer.push(RDF.RDF)
+        if "xml_base" in args:
+            writer.attribute(XMLBASE, args["xml_base"])
         writer.namespaces(namespaces.iteritems())
 
         # Write out subjects that can not be inline
@@ -173,7 +182,7 @@ class PrettyXMLSerializer(Serializer):
             if bnode not in self.__serialized:
                 self.subject(subject, 1)
         writer.pop(RDF.RDF)
-        stream.write("\n")
+        stream.write(b("\n"))
 
         # Set to None so that the memory can get garbage collected.
         self.__serialized = None
@@ -199,7 +208,9 @@ class PrettyXMLSerializer(Serializer):
             writer.push(element)
             if isinstance(subject, BNode):
                 def subj_as_obj_more_than(ceil):
-                    return more_than(store.triples((None, None, subject)), ceil)
+                    return True 
+                    # more_than(store.triples((None, None, subject)), ceil)
+                
                 #here we only include BNode labels if they are referenced
                 #more than once (this reduces the use of redundant BNode identifiers)
                 if subj_as_obj_more_than(1):
