@@ -152,7 +152,7 @@ class ParsedString(unicode):
 class ParsedDatatypedLiteral(object):
     """
     Placeholder for Datatyped literals
-    This is neccessary (instead of instanciating Literals directly)
+    This is necessary (instead of instantiating Literals directly)
     when datatypes IRIRefs are QNames (in which case the prefix needs to be resolved at some point)
     """
     def __init__(self,value,dType):
@@ -592,7 +592,8 @@ class RDFTerm(object):
 class Resource(RDFTerm):
     """
     Represents a sigle resource in a triple pattern.  It consists of an identifier
-    (URIRef or BNode) and a list of rdfextras.sparql.bison.Triples.PropertyValue instances
+    (URIRef or BNode) and a list of :class:`~rdfextras.sparql.components.PropertyValue`
+    instances
     """
     def __init__(self,identifier=None,propertyValueList=None):
         self.identifier = identifier is not None and identifier or BNode()
@@ -694,6 +695,12 @@ class PropertyValue(object):
     def __eq__(self, other):
         return (self.property == other.property and
                 self.objects == other.objects)
+    
+    def __hash__(self):
+        h = hash(self.property)  
+        for o in self.objects:
+            h ^= hash(o)
+        return h
 
 class ParsedConstrainedTriples(object):
     """

@@ -25,6 +25,8 @@ See:
 
 """
 
+__all__ = ['RdfJsonParser']
+
 import logging
 try:
     import json
@@ -113,7 +115,6 @@ class RdfJsonParser(Parser):
                         pred = URIRef(p)
                         
                     for vh in v:
-                        val = None
                         value = vh['value']
                         vt = vh['type']
                         if vt == 'literal':
@@ -128,6 +129,6 @@ class RdfJsonParser(Parser):
                         elif vt == 'uri':
                             val = URIRef(value)
                         elif vt == 'bnode':
-                            val = BNode(value[2:])
+                            val = BNode(val[2:])
                         sink.add((s, pred, val))
         # returns None

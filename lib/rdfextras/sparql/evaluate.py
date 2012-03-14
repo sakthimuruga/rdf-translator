@@ -274,12 +274,10 @@ def mapToOperator(expr,prolog,combinationArg=None,constraint=False):
             return """operators.EBV(%r)%s"""%(lit,combinationInvokation)
         else:
             return repr(lit)
-    elif isinstance(expr,Literal):
-        return repr(expr)
-    elif isinstance(expr,URIRef):
+    elif isinstance(expr,(Literal, URIRef)):
         import warnings
         warnings.warn("There is the possibility of __repr__ being deprecated in python3K",DeprecationWarning,stacklevel=3)        
-        return repr(expr)    
+        return repr(expr)
     elif isinstance(expr,QName):
         if expr[:2] == '_:':
             return repr(BNode(expr[2:]))
@@ -339,14 +337,14 @@ def createSPARQLPConstraint(filter,prolog):
     else:
         const = True
     if isinstance(reducedFilter,ParsedConditionalAndExpressionList):
-        combinationLambda = 'lambda(i): %s'%(' or '.join(
+        combinationLambda = 'lambda i: %s'%(' or '.join(
             ['%s'%mapToOperator(expr,prolog,combinationArg='i',constraint=const) \
                         for expr in reducedFilter]))
         if prolog.DEBUG:
             print "sparql-p operator(s): %s"%combinationLambda
         return eval(combinationLambda)
     elif isinstance(reducedFilter,ParsedRelationalExpressionList):
-        combinationLambda = 'lambda(i): %s'%(' and '.join(
+        combinationLambda = 'lambda i: %s'%(' and '.join(
             ['%s'%mapToOperator(expr,prolog,combinationArg='i',constraint=const) \
                          for expr in reducedFilter]))
         if prolog.DEBUG:
@@ -358,7 +356,7 @@ def createSPARQLPConstraint(filter,prolog):
             print "sparql-p operator(s): %s"%rt
         return eval(rt)
     elif isinstance(reducedFilter,(ParsedAdditiveExpressionList,UnaryOperator,FunctionCall)):
-        rt='lambda(i): %s'%(
+        rt='lambda i: %s'%(
             mapToOperator(reducedFilter,prolog,combinationArg='i',constraint=const))
         if prolog.DEBUG:
             print "sparql-p operator(s): %s"%rt

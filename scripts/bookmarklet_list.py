@@ -20,6 +20,7 @@ def main():
         "n3",
         "nt",
         "rdf-json",
+        "json-ld",
         "trix"]
         
     output_formats = [
@@ -31,6 +32,7 @@ def main():
         "nt",
         "rdf-json-pretty",
         "rdf-json",
+        "json-ld",
         "trix"]
         
     service = "http://rdf-translator.appspot.com/parse"
