@@ -1,6 +1,4 @@
-#!/d/Bin/Python/python.exe
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
 #
 """
 This is an RDFLib store around Ivan Herman et al.'s SPARQL service wrapper. 
@@ -23,14 +21,24 @@ __contact__ = 'Ivan Herman, ivan_herman@users.sourceforge.net'
 __date__    = "2011-01-30"
 
 import re
-import warnings
+import sys
+# import warnings
 try:
     from SPARQLWrapper import SPARQLWrapper, XML
     from SPARQLWrapper.Wrapper import QueryResult
 except ImportError:
     raise Exception("SPARQLWrapper not found! SPARQL Store will not work. Install with 'easy_install SPARQLWrapper'")
 
-import xml.etree.ElementTree
+if getattr(sys, 'pypy_version_info', None) is not None \
+      or sys.platform.startswith('java') \
+      or sys.version_info[:2] < (2, 6):
+    import elementtree as etree
+    from elementtree import ElementTree
+else:
+    try:
+        from xml import etree
+    except ImportError:
+        import elementtree as etree
 
 from rdfextras.store.REGEXMatching import NATIVE_REGEX
 
@@ -45,7 +53,7 @@ import urlparse
 BNODE_IDENT_PATTERN = re.compile('(?P<label>_\:[^\s]+)')
 SPARQL_NS        = Namespace('http://www.w3.org/2005/sparql-results#')
 sparqlNsBindings = {u'sparql':SPARQL_NS}
-xml.etree.ElementTree._namespace_map["sparql"]=SPARQL_NS
+etree.ElementTree._namespace_map["sparql"]=SPARQL_NS
 
 def TraverseSPARQLResultDOM(doc,asDictionary=False):
     """
@@ -54,31 +62,33 @@ def TraverseSPARQLResultDOM(doc,asDictionary=False):
     """
     
     # namespace handling in elementtree xpath sub-set is not pretty :(
-    # and broken in < 1.3, according to two  FutureWarnings:
-    # 1.
-    # FutureWarning: This search is broken in 1.3 and earlier, and will 
-    # be fixed in a future version.  If you rely on the current behaviour, 
-    # change it to 
-    # './{http://www.w3.org/2005/sparql-results#}head/{http://www.w3.org/2005/sparql-results#}variable'
-    # 2.
-    # FutureWarning: This search is broken in 1.3 and earlier, and will be 
-    # fixed in a future version.  If you rely on the current behaviour, 
-    # change it to 
-    # './{http://www.w3.org/2005/sparql-results#}results/{http://www.w3.org/2005/sparql-results#}result'
-    # Handle ElementTree warning
-    variablematch = '/{http://www.w3.org/2005/sparql-results#}head/{http://www.w3.org/2005/sparql-results#}variable'
-    resultmatch = '/{http://www.w3.org/2005/sparql-results#}results/{http://www.w3.org/2005/sparql-results#}result'
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        matched_variables = doc.findall(variablematch)
-        if len(w) == 1:
-            variablematch = '.' + variablematch
-            resultmatch = '.' + resultmatch
-            # Could be wrong result, re-do from start
-            matched_variables = doc.findall(variablematch)
-
-    vars = [Variable(v.attrib["name"]) for v in matched_variables]
-    for result in doc.findall(resultmatch):
+    vars = [Variable(v.attrib["name"]) for v in
+                doc.findall('./{http://www.w3.org/2005/sparql-results#}head/{http://www.w3.org/2005/sparql-results#}variable')]
+    for result in doc.findall('./{http://www.w3.org/2005/sparql-results#}results/{http://www.w3.org/2005/sparql-results#}result'):
+    # # and broken in < 1.3, according to two  FutureWarnings:
+    # # 1.
+    # # FutureWarning: This search is broken in 1.3 and earlier, and will 
+    # # be fixed in a future version.  If you rely on the current behaviour, 
+    # # change it to 
+    # # './{http://www.w3.org/2005/sparql-results#}head/{http://www.w3.org/2005/sparql-results#}variable'
+    # # 2.
+    # # FutureWarning: This search is broken in 1.3 and earlier, and will be 
+    # # fixed in a future version.  If you rely on the current behaviour, 
+    # # change it to 
+    # # './{http://www.w3.org/2005/sparql-results#}results/{http://www.w3.org/2005/sparql-results#}result'
+    # # Handle ElementTree warning
+    # variablematch = '/{http://www.w3.org/2005/sparql-results#}head/{http://www.w3.org/2005/sparql-results#}variable'
+    # resultmatch = '/{http://www.w3.org/2005/sparql-results#}results/{http://www.w3.org/2005/sparql-results#}result'
+    # # with warnings.catch_warnings(record=True) as w:
+    # #     warnings.simplefilter("always")
+    # #     matched_variables = doc.findall(variablematch)
+    # #     if len(w) == 1:
+    # #         variablematch = '.' + variablematch
+    # #         resultmatch = '.' + resultmatch
+    # #         # Could be wrong result, re-do from start
+    # #         matched_variables = doc.findall(variablematch)
+    # vars = [Variable(v.attrib["name"]) for v in matched_variables]
+    # for result in doc.findall(resultmatch):
         currBind = {}
         values = []
         for binding in result.findall('{http://www.w3.org/2005/sparql-results#}binding'):
@@ -90,7 +100,12 @@ def TraverseSPARQLResultDOM(doc,asDictionary=False):
         if asDictionary:
             yield currBind,vars
         else:
-            yield values[0] if len(values)==1 else tuple(values),vars
+            def stab(values):
+                if len(values)==1:
+                    return values[0]
+                else:
+                    return tuple(values)
+            yield stab(values), vars
 
 def localName(qname): 
     # wtf - elementtree cant do this for me
@@ -130,21 +145,30 @@ class SPARQLResult(QueryResult):
     graph : as an RDFLib Graph - for CONSTRUCT and DESCRIBE queries
     """
     def __init__(self,result):
-        self.result    = xml.etree.ElementTree.parse(result)
+        self.result    = etree.ElementTree.parse(result)
         self.noAnswers = 0
         self.askAnswer = None
 
     def _parseResults(self):
-        # Handle ElementTree warning, see LOC#51 (above)
-        booleanmatch = '/{http://www.w3.org/2005/sparql-results#}boolean'
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            matched_results = self.result.findall(booleanmatch)
-            if len(w) == 1:
-                # Could be wrong result, re-do from start
-                booleanmatch = '.' + booleanmatch
-                matched_results = self.askAnswer=self.result.findall(booleanmatch)
-            return matched_results
+        self.askAnswer=self.result.findall('./{http://www.w3.org/2005/sparql-results#}boolean')
+        # # Handle ElementTree warning, see LOC#51 (above)
+        # booleanmatch = '/{http://www.w3.org/2005/sparql-results#}boolean'
+        # # with warnings.catch_warnings(record=True) as w:
+        # #     warnings.simplefilter("always")
+        # #     matched_results = self.result.findall(booleanmatch)
+        # #     if len(w) == 1:
+        # #         # Could be wrong result, re-do from start
+        # #         booleanmatch = '.' + booleanmatch
+        # #         matched_results = self.askAnswer=self.result.findall(booleanmatch)
+        # #     return matched_results
+        # for w in (warnings.catch_warnings(record=True)):
+        #     warnings.simplefilter("always")
+        #     matched_results = self.result.findall(booleanmatch)
+        #     if len(w) == 1:
+        #         # Could be wrong result, re-do from start
+        #         booleanmatch = '.' + booleanmatch
+        #         matched_results = self.askAnswer=self.result.findall(booleanmatch)
+        #     return matched_results
 
     def __len__(self):
         raise NotImplementedError("Results are an iterable!")
@@ -286,7 +310,7 @@ class SPARQLStore(SPARQLWrapper,Store):
 
         self.setQuery(query)
         
-        doc = xml.etree.ElementTree.parse(SPARQLWrapper.query(self).response)
+        doc = etree.ElementTree.parse(SPARQLWrapper.query(self).response)
         #xml.etree.ElementTree.dump(doc)
         for rt,vars in TraverseSPARQLResultDOM(doc,asDictionary=True):
             
@@ -314,7 +338,7 @@ class SPARQLStore(SPARQLWrapper,Store):
 
             self.setQuery(q)
         
-            doc = xml.etree.ElementTree.parse(SPARQLWrapper.query(self).response)
+            doc = etree.ElementTree.parse(SPARQLWrapper.query(self).response)
             rt,vars=iter(TraverseSPARQLResultDOM(doc,asDictionary=True)).next()
             return int(rt.get(Variable("c")))
 

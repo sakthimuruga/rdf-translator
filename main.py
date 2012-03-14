@@ -48,7 +48,7 @@ class ParserHandler(webapp.RequestHandler):
                 self.response.headers['Content-Type'] = "text/plain"
             elif self.output_format == "trix":
                 self.response.headers['Content-Type'] = "application/xml"
-            elif self.output_format == "rdf-json" or self.output_format == "rdf-json-pretty":
+            elif self.output_format == "rdf-json" or self.output_format == "rdf-json-pretty" or self.output_format == "json-ld":
                 self.response.headers['Content-Type'] = "application/json"
             else:
                 self.response.headers['Content-Type'] = "text/plain"

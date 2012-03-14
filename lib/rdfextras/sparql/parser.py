@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import sys
 
 from pyparsing import (Regex, Suppress, Combine, Optional, CaselessKeyword,
@@ -11,7 +10,8 @@ import rdflib
 #from rdflib.term import URIRef
 from rdflib.namespace import XSD
 from rdfextras.sparql import components
-
+import logging
+log = logging.getLogger(__name__)
 
 # Debug utilities:
 
@@ -72,10 +72,13 @@ if DEBUG:
                 self.writer.simpleElement(u'fail', attributes={
                   u'err': unicode(repr(e))})
                 #self.writer.endElement(u'attempt')
-                raise
-            finally:
                 self.writer.endElement(u'trace')
                 self.writer.endDocument()
+
+                raise
+            
+            self.writer.endElement(u'trace')
+            self.writer.endDocument()
 
             return result
 
@@ -108,36 +111,37 @@ if DEBUG:
         else:
           return thing
 
-    from pprint import pprint
+    from pprint import pformat
 
     def debug(results, text=None):
         if text is None:
             text = ''
-        print >> sys.stderr, 'DEBUG (parse success):', text
-        pprint(struct_data(results.asList(), 3, True), sys.stderr)
+        log.debug('DEBUG (parse success): %s' % text)
+        log.debug(pformat(struct_data(results.asList(), 3, True)))
 
     def debug2(s, loc, toks):
-        print >> sys.stderr, 'DEBUG (parse success): parse string =', s
-        pprint(struct_data(toks.asList(), 3, True), sys.stderr)
+        log.debug('DEBUG (parse success): parse string = %s' % s)
+        log.debug(pformat(struct_data(toks.asList(), 3, True)))
+        log.debug(pformat(struct_data(toks.asList(), 3, True)))
 
     def debug_fail(s, loc, expr, err):
-        print >> sys.stderr, 'DEBUG (parse fail): expr =', expr
-        print >> sys.stderr, err
+        log.debug('DEBUG (parse fail): expr = %s' % expr)
+        log.debug(err)
 
 
 def composition(callables):
     def composed(arg):
         result = arg
-        for callable in callables:
-            result = callable(result)
+        for func in callables:
+            result = func(result)
         return result
     return composed
 
 def composition2(callables):
     def composed(*args):
         result = args
-        for callable in callables:
-            result = [callable(*result)]
+        for func in callables:
+            result = [func(*result)]
         return result[0]
     return composed
 
@@ -193,13 +197,13 @@ def refer_component(component, initial_args=None, projection=None, **kwargs):
     if initial_args is None and projection is None:
         def apply(results):
             if DEBUG:
-                print >> sys.stderr, component
-                debug(results)
+                log.debug(component)
+                log.debug(results)
             return component(*results.asList(), **kwargs)
     else:
         def apply(results):
             if DEBUG:
-                print >> sys.stderr, component
+                log.debug(component)
                 debug(results)
             if initial_args is not None:
                 results = initial_args + results.asList()
@@ -762,7 +766,7 @@ if DEBUG:
 Query = (Prologue + (SelectQuery | ConstructQuery |
                      DescribeQuery | AskQuery)).setParseAction(
   refer_component(components.Query))
-Query.ignore('#' + restOfLine)
+Query.ignore( Regex( '(^| )#')+ restOfLine)
 if DEBUG:
     Query.setName('Query')
 

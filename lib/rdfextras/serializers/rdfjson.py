@@ -125,6 +125,7 @@ class RdfJsonSerializer(Serializer):
         self.gdataColon = 0
         self.prettyPredName = 0
 
+
     def serialize(self, stream, base=None, encoding=None, **args):
         self.base = base
         self.__stream = stream
@@ -137,7 +138,7 @@ class RdfJsonSerializer(Serializer):
         for subject in self.store.subjects():
             self.subject(subject)
 
-        srlzd = json.dumps(self.jsonObj, indent=2, ensure_ascii=False)
+        srlzd = json.dumps(self.jsonObj, indent=2)
         self.write(srlzd)
         del self.__serialized
 

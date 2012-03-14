@@ -12,6 +12,9 @@ rdflib.plugin.register("rdf-json", Parser, "rdfextras.parsers.rdfjson", "RdfJson
 rdflib.plugin.register("rdf-json", Serializer, "rdfextras.serializers.rdfjson", "RdfJsonSerializer")
 rdflib.plugin.register("rdf-json-pretty", Serializer, "rdfextras.serializers.rdfjson", "PrettyRdfJsonSerializer")
 
+rdflib.plugin.register("json-ld", Parser, "rdfextras.parsers.jsonld", "JsonLDParser")
+rdflib.plugin.register("json-ld", Serializer, "rdfextras.serializers.jsonld", "JsonLDSerializer")
+
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, JavascriptLexer
@@ -115,7 +118,7 @@ def pygmentize(text, format):
         lexer = sw.Notation3Lexer()
     elif format == "pretty-xml" or format == "xml" or format == "trix":
         lexer = XmlLexer()
-    elif format == "rdf-json" or format == "rdf-json-pretty":
+    elif format == "rdf-json" or format == "rdf-json-pretty" or format == "json-ld":
         lexer = JavascriptLexer()
     else:
         lexer = guess_lexer(text)

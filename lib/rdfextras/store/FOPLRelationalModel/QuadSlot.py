@@ -5,17 +5,20 @@ Utility functions associated with RDF terms:
 - escaping literals for SQL persistence
 
 """
-from hashlib import md5
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 from rdflib.term import Literal
 from rdfextras.store.REGEXMatching import REGEXTerm
 from rdflib.graph import Graph
 from rdflib.graph import QuotedGraph
-from rdfextras.tools.termutils import SUBJECT
-from rdfextras.tools.termutils import PREDICATE
-from rdfextras.tools.termutils import OBJECT
-from rdfextras.tools.termutils import CONTEXT
-from rdfextras.tools.termutils import term2Letter
-from rdfextras.tools.termutils import escape_quotes
+from rdfextras.utils.termutils import SUBJECT
+from rdfextras.utils.termutils import PREDICATE
+from rdfextras.utils.termutils import OBJECT
+from rdfextras.utils.termutils import CONTEXT
+from rdfextras.utils.termutils import term2Letter
+from rdfextras.utils.termutils import escape_quotes
 
 Any = None
 
@@ -56,7 +59,7 @@ def normalizeValue(value, termType, useSignedInts=False):
         value = u'http://www.w3.org/2002/07/owl#NothingU'
     else:
         value = (isinstance(value, Graph) \
-                        and value.identifier or str(value)) + termType
+                        and value.identifier or str(value.encode('utf-8'))) + termType
     unsigned_hash = int(md5(
                       isinstance(value, unicode) and value.encode('utf-8')
                                                  or value)
