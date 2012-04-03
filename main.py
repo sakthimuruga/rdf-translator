@@ -158,3 +158,5 @@ def main():
 ## langcode = re.compile(r'[a-zA-Z]+(-[a-zA-Z0-9]+){0,2}')
 # rdflib/plugins/serializers/turtle.py:205
 ## commented lines for the creation of prefixes -> qnames for subjects and objects
+# rdflib/parser.py:67
+## user-agent string of http header to "Python RDF Translator (http://rdf-translator.appspot.com/)", otherwise certain web pages will obfuscate certain content, i.e. rich snippet code
