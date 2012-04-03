@@ -64,7 +64,7 @@ class StringInputSource(InputSource):
 
 
 headers = {
-    'User-agent': 'rdflib-%s (http://rdflib.net/; eikeon@eikeon.com)' % __version__,
+    'User-agent': 'Python RDF Translator (http://rdf-translator.appspot.com/)', #'rdflib-%s (http://rdflib.net/; eikeon@eikeon.com)' % __version__,
     'Cache-control': 'max-age=10'
     }
 
