@@ -22,6 +22,9 @@ from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, J
 from google.appengine.api import urlfetch
 import urllib
 
+import socket
+socket.setdefaulttimeout(60)
+
 try:
   import json
 except ImportError:
@@ -70,7 +73,7 @@ known_vocabs = {
 def createSnippet(inputrdf, format="rdfa"):
     # test connection
     HOST1 = False
-    result = urlfetch.fetch(url="http://rhizomik.net:80/")
+    result = urlfetch.fetch(url="http://rhizomik.net:80/", allow_truncated=True, deadline=60)
     if result.status_code == 200:
         HOST1 = True
     
@@ -90,12 +93,16 @@ def createSnippet(inputrdf, format="rdfa"):
         response = urlfetch.fetch(url="http://rhizomik.net:80/redefer-services/rdf2%s" % format,
             payload=form_data,
             method=urlfetch.POST,
-            headers=headers)
+            headers=headers,
+            allow_truncated=True,
+            deadline=60)
     else:
         response = urlfetch.fetch(url="http://rhizomik-redefer.appspot.com:80/rdf2%s" % format,
             payload=form_data,
             method=urlfetch.POST,
-            headers=headers)
+            headers=headers,
+            allow_truncated=True,
+            deadline=60)
             
     if response and response.status_code == 200:
         return response.content
@@ -107,7 +114,7 @@ def getPrefixDict(url):
     if not url in known_vocabs.values():
         #logging.info(url)
         params = {"uri": url, "format": "json"}
-        result = urlfetch.fetch(url="http://prefix.cc/reverse?%s" % urllib.urlencode(params))
+        result = urlfetch.fetch(url="http://prefix.cc/reverse?%s" % urllib.urlencode(params), deadline=60)
         if result.status_code == 200:
             #logging.info(result.content)
             return json.loads(result.content).items()

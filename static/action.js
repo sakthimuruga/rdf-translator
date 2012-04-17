@@ -19,6 +19,20 @@ $(function() {
        });
     });
     
+    $("#tabs_uri_link").click(function() {
+        $("#uri").focus();
+    });
+    
+    $("#tabs_box_link").click(function() {
+        $("#textbox").focus();
+    });
+    
+    $(document).keypress(function(e) {
+        var focus = $("*:focus").attr('id')
+        if(e.keyCode == 13 && focus in {"uri":1, "in":1, "out":1}) {
+            submit();
+        }
+    });
 });
 
 /*
