@@ -23,7 +23,7 @@ from google.appengine.api import urlfetch
 import urllib
 
 import socket
-socket.setdefaulttimeout(60)
+socket.setdefaulttimeout(10)
 
 try:
   import json
@@ -73,7 +73,7 @@ known_vocabs = {
 def createSnippet(inputrdf, format="rdfa"):
     # test connection
     HOST1 = False
-    result = urlfetch.fetch(url="http://rhizomik.net:80/", allow_truncated=True, deadline=60)
+    result = urlfetch.fetch(url="http://rhizomik.net:80/", allow_truncated=True, deadline=10)
     if result.status_code == 200:
         HOST1 = True
     
@@ -95,14 +95,14 @@ def createSnippet(inputrdf, format="rdfa"):
             method=urlfetch.POST,
             headers=headers,
             allow_truncated=True,
-            deadline=60)
+            deadline=10)
     else:
         response = urlfetch.fetch(url="http://rhizomik-redefer.appspot.com:80/rdf2%s" % format,
             payload=form_data,
             method=urlfetch.POST,
             headers=headers,
             allow_truncated=True,
-            deadline=60)
+            deadline=10)
             
     if response and response.status_code == 200:
         return response.content
@@ -114,7 +114,7 @@ def getPrefixDict(url):
     if not url in known_vocabs.values():
         #logging.info(url)
         params = {"uri": url, "format": "json"}
-        result = urlfetch.fetch(url="http://prefix.cc/reverse?%s" % urllib.urlencode(params), deadline=60)
+        result = urlfetch.fetch(url="http://prefix.cc/reverse?%s" % urllib.urlencode(params), deadline=10)
         if result.status_code == 200:
             #logging.info(result.content)
             return json.loads(result.content).items()
@@ -131,27 +131,27 @@ def pygmentize(text, format):
         lexer = guess_lexer(text)
     return highlight(text, lexer, HtmlFormatter())
 
-def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", output_format="pretty-xml"):
+def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", target_format="pretty-xml"):
     global known_vocabs
     
     final_format = None
     base = None
     
-    if output_format == "rdfa" or output_format == "microdata":
-        final_format = output_format
-        output_format = "pretty-xml"
+    if target_format == "rdfa" or target_format == "microdata":
+        final_format = target_format
+        target_format = "pretty-xml"
         base = "http://rdf-translator.appspot.com/"
     
     g = rdflib.Graph()
 
-    if not output_format == "trix": # trix should not display all these namespace definitions
+    if not target_format == "trix": # trix should not display all these namespace definitions
         for key, value in dict.items(known_vocabs):
             g.bind(key, value)
     
     if file_format == "string":
-        g.parse(data=f, format=input_format, publicID=base)
+        g.parse(data=f, format=source_format, publicID=base)
     else:
-        g.parse(f, format=input_format, publicID=base)
+        g.parse(f, format=source_format, publicID=base)
         # NOTE: has no effect with current RDFLib version, because it shows full URIs for subjects and objects
         #d = dict()
         #for s in g.subjects(None, None):
@@ -170,12 +170,12 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
         #ns_sorted = sorted(d.items(), key=lambda x: x[1], reverse=True)
     
     if len(g) > 0:
-        serialization = g.serialize(format=output_format).decode("UTF-8")
+        serialization = g.serialize(format=target_format).decode("UTF-8")
         
-        if output_format == "n3" or output_format == "pretty-xml" or output_format == "xml":
+        if target_format == "n3" or target_format == "pretty-xml" or target_format == "xml":
             d = {}
             # for n3, try to resolve missing prefixes with prefix.cc
-            if output_format == "n3":
+            if target_format == "n3":
                 from StringIO import StringIO
                 n3_file = StringIO(serialization)
                 for line in n3_file.readlines():
@@ -187,7 +187,7 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
                             d = dict(d.items() + getPrefixDict(url))
                                     
             # for pretty-xml the same
-            elif output_format == "pretty-xml" or output_format == "xml":
+            elif target_format == "pretty-xml" or target_format == "xml":
                 for m in re.finditer(r"xmlns:[a-zA-Z0-9]+=\"?([^\"]*)", serialization):
                     #logging.info(m.group(1))
                     url = m.group(1)
@@ -201,23 +201,23 @@ def parse(f, do_pygmentize=False, file_format="file", input_format="rdfa", outpu
                     g.bind(key, value)
             
                 if file_format == "string":
-                    g.parse(data=f, format=input_format, publicID=base)
+                    g.parse(data=f, format=source_format, publicID=base)
                 else:
                     # NOTE: has no effect with current RDFLib version
                     #it = iter(xrange(len(ns_sorted)))
                     #for item in ns_sorted:
                     #    g.bind("ns%d"%it.next(), item)
-                    g.parse(f, format=input_format, publicID=base)
+                    g.parse(f, format=source_format, publicID=base)
                             
-                serialization = g.serialize(format=output_format).decode("UTF-8")           
+                serialization = g.serialize(format=target_format).decode("UTF-8")           
         
         # final format is rdfa or microdata, made detour over rdf/xml
         if final_format:
-            rdf = g.serialize(format=output_format).decode("UTF-8")
+            rdf = g.serialize(format=target_format).decode("UTF-8")
             serialization = createSnippet(rdf, final_format).decode("UTF-8")
         
         if do_pygmentize:
-            return pygmentize(serialization, output_format)
+            return pygmentize(serialization, target_format)
         else:
             return serialization
     else:

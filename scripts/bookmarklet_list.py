@@ -35,7 +35,7 @@ def main():
         "json-ld",
         "trix"]
         
-    service = "http://rdf-translator.appspot.com/parse"
+    service = "http://rdf-translator.appspot.com/convert"
     
     f = open("matrix.html", "w")
     
@@ -64,14 +64,14 @@ def main():
             if "detect" in i:
                 f.write("""
         <td style="width:70px">
-            <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;of=%(of)s&amp;html=1';">
-                <img src="static/bookmark.png" alt="%(detect)s -> %(of)s" title="%(detect)s to %(of)s" />
+            <a href="javascript:location.href='%(service)s/detect/%(of)s/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> %(of)s" title="detect to %(of)s" />
             </a>
-        </td>""" %{"service":service, "of":o, "detect":i})
+        </td>""" %{"service":service, "of":o})
             else:
                 f.write("""
         <td style="width:70px">
-            <a href="javascript:location.href='%(service)s?url='+encodeURIComponent(location.href)+'&amp;if=%(if)s&amp;of=%(of)s&amp;html=1';">
+            <a href="javascript:location.href='%(service)s/%(if)s/%(of)s/html/'+encodeURIComponent(location.href);">
                 <img src="static/bookmark.png" alt="%(if)s -> %(of)s" title="%(if)s to %(of)s" />
             </a>
         </td>""" %{"service":service, "if":i, "of":o})

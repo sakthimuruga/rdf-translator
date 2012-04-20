@@ -16,8 +16,9 @@
 #
 import os
 
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp import util
+#from google.appengine.ext import webapp
+#from google.appengine.ext.webapp import util
+import webapp2
 
 import translator
 from rdflib.parser import create_input_source
@@ -27,59 +28,84 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-class ParserHandler(webapp.RequestHandler):
+class TranslatorHandler(webapp2.RequestHandler):
+    
+    # (from)/(to)/(html?)/(url)
+    def prepareArgs(self, arg1, arg2, arg3, arg4, arg5):
+        args = [arg1, arg2, arg3, arg4, arg5]
+        
+        self.html = False
+        self.page = None
+        self.content = None
+        
+        self.source_format = args[0]
+        self.target_format = args[1]
+        
+        if args[3]:
+            self.page = args[3]
+            if args[2] == "html":
+                self.html = True
+            elif args[2] == "pygmentize":
+                self.do_pygmentize = True
+        elif args[2]:
+            self.page = args[2]
+            
+        if self.page == "content":
+            if args[4]:
+                self.content = args[4]
+            else:
+                self.content = self.request.get("content")
+        else:
+            if self.page and not self.page.find("://") > 0:
+                self.page = "http://%s" % self.page
+    
     def processRequest(self):
-        self.page = self.request.get("url")
-        if self.page and not self.page.find("://") > 0:
-            self.page = "http://%s" % self.page
-        self.content = self.request.get("content")
-        self.input_format = self.request.get("if")
-        self.output_format = self.request.get("of")
-        self.html = self.request.get("html")
-        if self.html == "1":
+        if self.html == True:
             self.do_pygmentize = True
             self.response.headers['Content-Type'] = "text/html"
         else:
-            if self.output_format == "pretty-xml" or self.output_format == "xml":
+            if self.target_format == "pretty-xml" or self.target_format == "xml":
                 self.response.headers['Content-Type'] = "application/rdf+xml"
-            elif self.output_format == "n3":
+            elif self.target_format == "n3":
                 self.response.headers['Content-Type'] = "text/n3"
-            elif self.output_format == "nt":
+            elif self.target_format == "nt":
                 self.response.headers['Content-Type'] = "text/plain"
-            elif self.output_format == "trix":
+            elif self.target_format == "trix":
                 self.response.headers['Content-Type'] = "application/xml"
-            elif self.output_format == "rdf-json" or self.output_format == "rdf-json-pretty" or self.output_format == "json-ld":
+            elif self.target_format == "rdf-json" or self.target_format == "rdf-json-pretty" or self.target_format == "json-ld":
                 self.response.headers['Content-Type'] = "application/json"
+            elif self.target_format == "rdfa" or self.target_format == "microdata":
+                self.response.headers['Content-Type'] = "text/html"
             else:
                 self.response.headers['Content-Type'] = "text/plain"
             
-        if not self.input_format:
+        if not self.source_format or self.source_format == "detect":
             if self.content:
-                source = create_input_source(data=self.content, format=self.input_format)
-                self.input_format = source.content_type
+                source = create_input_source(data=self.content, format=self.source_format)
+                self.source_format = source.content_type
             elif self.page:
-                source = create_input_source(location=self.page, format=self.input_format)
-                self.input_format = source.content_type
+                source = create_input_source(location=self.page, format=self.source_format)
+                self.source_format = source.content_type
                 
         try:
             self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Translation failed</p>"
             if self.content:
-                self.response_string = translator.parse(self.content, do_pygmentize=self.do_pygmentize, file_format="string", input_format=self.input_format, output_format=self.output_format)
-                if self.response_string.strip() == "" and self.input_format == "text/html": # fix microdata test
-                    self.response_string = translator.parse(self.content, do_pygmentize=self.do_pygmentize, file_format="string", input_format="microdata", output_format=self.output_format)
+                self.response_string = translator.convert(self.content, do_pygmentize=self.do_pygmentize, file_format="string", source_format=self.source_format, target_format=self.target_format)
+                if self.response_string.strip() == "" and self.source_format == "text/html": # fix microdata test
+                    self.response_string = translator.convert(self.content, do_pygmentize=self.do_pygmentize, file_format="string", source_format="microdata", target_format=self.target_format)
             elif self.page:
-                self.response_string = translator.parse(self.page, do_pygmentize=self.do_pygmentize, file_format="file", input_format=self.input_format, output_format=self.output_format)
-                if self.response_string.strip() == "" and self.input_format == "text/html": # fix microdata test
-                    self.response_string = translator.parse(self.page, do_pygmentize=self.do_pygmentize, file_format="file", input_format="microdata", output_format=self.output_format)
+                self.response_string = translator.convert(self.page, do_pygmentize=self.do_pygmentize, file_format="file", source_format=self.source_format, target_format=self.target_format)
+                if self.response_string.strip() == "" and self.source_format == "text/html": # fix microdata test
+                    self.response_string = translator.convert(self.page, do_pygmentize=self.do_pygmentize, file_format="file", source_format="microdata", target_format=self.target_format)
             if self.response_string.strip() == "":
                 raise Exception
         except Exception, e:
-            self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.input_format, self.output_format, str(e))
+            self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.source_format, self.target_format, str(e))
             
         #self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
         self.response.headers.add_header("Access-Control-Allow-Origin", "*") # enable CORS
 
-        if self.html == "1":
+        if self.html == True:
             header = """<!DOCTYPE html>
 <html>
     <head>
@@ -105,41 +131,39 @@ class ParserHandler(webapp.RequestHandler):
     	<meta name="author" content="Alex Stolz">
     </head>
     <body>
-""" % (self.output_format, self.page)
+""" % (self.target_format, self.page)
             self.response_string = header + self.response_string + """
     </body>
 </html>"""
               
-    def head(self):
+    def head(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         self.do_pygmentize = False
+        self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
-        
-    def get(self):
+    
+    def get(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         self.do_pygmentize = False
+        self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
-        self.response.out.write(self.response_string)
+        self.response.out.write(self.response_string)  
         
-    def post(self):
-        self.do_pygmentize = True
+    def post(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
+        self.do_pygmentize = False
+        self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
-        self.response.out.write(self.response_string)       
+        self.response.out.write(self.response_string)  
+
+# set log level
+logging.getLogger().setLevel(logging.INFO)
+# run application
+# rewrite URLs like /(from)/(to)/(html?)/(url)
+application = webapp2.WSGIApplication([
+    (r'/convert/([^/]*)/([^/]*)/(html)/(content)/(.*)', TranslatorHandler),
+    (r'/convert/([^/]*)/([^/]*)/(html|pygmentize)/(.*)', TranslatorHandler),
+    (r'/convert/([^/]*)/([^/]*)/(.*)', TranslatorHandler)],
+    debug=True)
 
 
-application = webapp.WSGIApplication([
-    ('/parse', ParserHandler)],
-             debug=True)
-
-def main():
-    logging.getLogger().setLevel(logging.INFO)
-    util.run_wsgi_app(application)
-
-
-# not needed in python 2.7 appengine (http://blog.notdot.net/2011/10/Migrating-to-Python-2-7-part-1-Threadsafe)
-#if __name__ == '__main__':
-#    main()
-    
-    
-    
 # hack: quoted os.getpid() in rdflib.plugins.parsers.notation3
 # set cache-control header in rdflib.parser headers dict to: 'Cache-Control': 'max-age=10' # set by AS
 # minor changes to rdflib/rdflib-microdata
