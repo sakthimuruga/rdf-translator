@@ -218,14 +218,14 @@ a:hover, #tabs_box a:hover {
 #clip_container {
     margin: 0 auto;
     width: 910px;
-    background-color: red;
+    background-color: white;
     position: relative;
 }
 
 #clip_button {
     color: #666;
-    position: absolute;
-    right: 0;
+    position: relative;
+    margin: 0 auto;
     padding: 2px;
     width: 150px;
     text-align: center;

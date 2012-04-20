@@ -1,4 +1,4 @@
-application: rdf-translator
+application: rdf-translator2
 version: 1
 runtime: python27
 api_version: 1
@@ -8,7 +8,7 @@ handlers:
 - url: /static
   static_dir: static
 
-- url: /parse
+- url: /convert.*
   script: main.application
 
 - url: /

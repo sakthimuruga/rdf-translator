@@ -35,65 +35,6 @@ $(function() {
     });
 });
 
-/*
-$(document).ready(function() {
-    $('#clip_button').mouseover(function(){
-        ZeroClipboard.setMoviePath('/static/zeroclipboard/ZeroClipboard10.swf');
-		clip = new ZeroClipboard.Client();
-		clip.setHandCursor(true);
-		var txt = $('#serialization').text();
-		clip.setText(txt);
-		clip.glue( this );
-		//Add a complete event to let the user know the text was copied
-		clip.addEventListener('complete', function(client, text) {
-		    var txt = $('#serialization').text();
-    		clip.setText(txt);
-    		//alert("copied"+text);
-		    $("#clip_button").html("copied to clipboard").fadeIn("slow").fadeOut(2000);
-		});
-    });
-});
-*/
-
-/*
-$(document).ready(function() {
-	$("#tab_container").tabs();
-	$("#clip_button").hide();
-	
-	// copy to clipboard
-	ZeroClipboard.setMoviePath('/static/zeroclipboard/ZeroClipboard10.swf');
-	$("#clip_button").click(function() {
-        var clip = new ZeroClipboard.Client();
-        //clip.setHandCursor( true );
-        
-        clip.glue( 'clip_button' );
-        
-        clip.setText($('#serialization').text());
-        
-    	//clip.addEventListener('load', function (client) {
-    	//	debugstr("Flash movie loaded and ready.");
-    	//});
-
-    	//clip.addEventListener('mouseOver', function (client) {
-    		// update the text on mouse over
-    	//	clip.setText( $('#serialization').text() );
-    	//});
-	
-    	clip.addEventListener('complete', function (client, text) {
-    		debugstr("Copied text to clipboard: " + text );
-    		$("#clip_button").html("copied to clipboard");
-    	});
-	});
-});
-
-
-function debugstr(msg) {
-	var p = document.createElement('p');
-	p.innerHTML = msg;
-	$('#debug').append(p);
-}
-*/
-
 
 var req = null;
 
@@ -118,6 +59,12 @@ function submit() {
 	if (req) {
 		informat = document.getElementById("in");
 		outformat = document.getElementById("out");
+		informat = informat.options[informat.selectedIndex].value;
+		outformat = outformat.options[outformat.selectedIndex].value;
+		if(!informat) {
+		    informat = "detect";
+		}
+		
 		// selected tab
 		var $tabs = $('#tab_container').tabs();
         var selected = $tabs.tabs('option', 'selected'); // => 0
@@ -128,44 +75,49 @@ function submit() {
 		    uri = document.getElementById("uri");
 		    if(!uri.value)
 			    uri.value = "http://www.ebusiness-unibw.org";
-		    query = "url="+encodeURIComponent(uri.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
-            link = "Link to <a href='http://rdf-translator.appspot.com/parse?"+query+"'>Persistent URI</a>.";
+		    query_p1 = "/"+informat+"/"+outformat;
+		    query_p2 = "/pygmentize";
+		    query_p3 = "/"+encodeURIComponent(uri.value);
+            link = "<section><div class=\"shade_box\"><p>You might pick one of the following <strong>persistent URIs</strong> of the output above to share with others or to integrate into your own applications:</p><ul><li><a href='/convert"+query_p1+"/html"+query_p3+"'>highlighted</a> (HTML-rendered)</li><li><a href='/convert"+query_p1+query_p3+"'>raw</a> (delivered with respective media type)</li></ul></div></section>";
+            req.open("GET", "/convert"+query_p1+query_p2+query_p3, true);
+            req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    	    req.send(null);
 		}
 		else if(selected == 1) {
 		    content = document.getElementById("textbox");
-		    query = "content="+encodeURIComponent(content.value)+"&if="+informat.options[informat.selectedIndex].value+"&of="+outformat.options[outformat.selectedIndex].value;
-            //link = "Link to <a href='http://rdf-translator.appspot.com/parse?"+query+"'>Persistent URI</a>.";
+		    query = informat+"/"+outformat+"/pygmentize/content";
+            // link = "Link to <a href='/convert/"+informat+"/"+outformat+"/html/content/"+encodeURIComponent(content.value.replace("'", "%27").replace(/(\n\r|\n|\r)/gm, " "))+"'>Persistent URI</a>.";
+            req.open("POST", "/convert/"+query, true);
+            req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    	    req.send("content="+encodeURIComponent(content.value));
 		}
-		req.open("POST", "/parse", true);
-	    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-	    req.send(query);
 		
 		//alert(query);
 		$("#clip_button").html("<strong>Copy To Clipboard...</strong>");
-		document.getElementById("converter_link").innerHTML = "";
-	    document.getElementById("converter_link").style.display = "none";
-		document.getElementById("progressbar").innerHTML = "<center><progress></progress></center>";
-		document.getElementById("progressbar").style.display = "block";
-		document.getElementById("serialization").style.display = "none";
-		document.getElementById("clip_button").style.display = "none";
+		$("#converter_link").html("");
+		$("#converter_link").css({"display":"none"});
+		$("#progressbar").html("<center><progress></progress></center>");
+		$("#progressbar").css({"display":"block"});
+		$("#serialization").css({"display":"none"});
+		$("#clip_button").css({"display":"none"});
 		req.onreadystatechange = function() {
 			//alert(req.readyState);
 			if (req.readyState == 4) {
 				//alert(req.status);
 				if (req.status == 200) {
-				    document.getElementById("converter_link").innerHTML = link;
-				    document.getElementById("converter_link").style.display = "block";
-					document.getElementById("serialization").innerHTML = req.responseText;
-					document.getElementById("serialization").style.display = "block";
-					document.getElementById("progressbar").style.display = "none";
-					document.getElementById("clip_button").style.display = "block";
+				    $("#serialization").html(req.responseText);
+				    $("#serialization").slideDown("slow", function() {
+				        $("#converter_link").html(link);
+                        $("#converter_link").slideDown("slow");
+				    });
+				    $("#clip_button").fadeIn("slow");
+				    $("#progressbar").css({"display":"none"});
 				}
 				else {
-				    document.getElementById("progressbar").innerHTML = "<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response: Either the entered URI does not exist or the service is temporarily unavailable. Please try again later or contact the developers by filling in the Feedback form.</p>";
+				    $("#progressbar").html("<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response: Either the entered URI does not exist or the service is temporarily unavailable. Please try again later or contact the developers by filling in the Feedback form.</p>");
 				}
 			}
 		}
-		//req.send(null);
 	}
 	return false;
 }
