@@ -37,6 +37,24 @@ class TranslatorHandler(webapp2.RequestHandler):
         self.html = False
         self.page = None
         self.content = None
+        self.three_oh_three = False
+        
+        if not args[0]:
+            # old request using /parse?if=<if>&of=<of>&url=<uri><&html=1>
+            self.page = self.request.get("url")
+            self.source_format = self.request.get("if")
+            self.target_format = self.request.get("of")
+            self.html_string = ""
+            if self.request.get("html") == "1":
+                self.html = True
+                self.html_string = "/html"
+            self.content = self.request.get("content")
+            if not self.content:
+                location = "/convert/%s/%s%s/%s" % (self.source_format, self.target_format, self.html_string, self.page)
+                self.response.headers['Location'] = location.encode("utf-8")
+                self.response.set_status(303)
+                self.three_oh_three = True
+            return
         
         self.source_format = args[0]
         self.target_format = args[1]
@@ -145,19 +163,22 @@ class TranslatorHandler(webapp2.RequestHandler):
         self.do_pygmentize = False
         self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
-        self.response.out.write(self.response_string)  
+        if not self.three_oh_three:
+            self.response.out.write(self.response_string)  
         
     def post(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         self.do_pygmentize = False
         self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
-        self.response.out.write(self.response_string)  
+        if not self.three_oh_three:
+            self.response.out.write(self.response_string)  
 
 # set log level
 logging.getLogger().setLevel(logging.INFO)
 # run application
 # rewrite URLs like /(from)/(to)/(html?)/(url)
 application = webapp2.WSGIApplication([
+    ('/parse', TranslatorHandler),
     (r'/convert/([^/]*)/([^/]*)/(html)/(content)/(.*)', TranslatorHandler),
     (r'/convert/([^/]*)/([^/]*)/(html|pygmentize)/(.*)', TranslatorHandler),
     (r'/convert/([^/]*)/([^/]*)/(.*)', TranslatorHandler)],
