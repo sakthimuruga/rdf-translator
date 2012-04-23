@@ -14,9 +14,9 @@
   Location: Neubiberg, Germany
 
 /* SITE */
-  Last update: 11/08/2011
+  Last update: 23/04/2012
   Language: English
-  Doctype: HTML5, CSS3
+  Doctype: HTML5, CSS3, JS
   IDE: TextMate, GAE, Gimp
 
 /* SPECIAL THANKS */
@@ -24,7 +24,7 @@
   Site: http://www.bmbf.de/en/
   Location: Berlin, Germany
 
-  Feedback Loop: Uwe Stoll, László Török, Bene Rodriguez-Castro
+  Feedback Loop: Bene Rodriguez-Castro, Mozhi Ge, Uwe Stoll, László Török
   Location: Neubiberg, Germany
 
   And, of course, all people who submitted valuable feedback and suggestions for improvement!

@@ -91,17 +91,9 @@
 		<div id="converter_link"></div>
 		<section>
 			<h1>REST API</h1>
-			<p>This on-line service provides an easily accessible API which allows for a couple of variants:</p>
+			<p>This on-line service provides an easily accessible API which allows for a couple of access methods:</p>
 			<ol>
-				<li>Highlighted code snippet formatted using HTML and CSS:
-					<pre>http://rdf-translator.appspot.com/convert/&lt;source&gt;/&lt;target&gt;/html/&lt;uri&gt;</pre>
-					Examples:
-					<ul>
-						<li><a href="/convert/rdfa/pretty-xml/html/http%3A%2F%2Fwww.ebusiness-unibw.org">URI, source data format, and target data format are given</a></li>
-						<li><a href="/convert/detect/pretty-xml/html/http%3A%2F%2Fwww.ebusiness-unibw.org">Input format is detected automatically</a></li>
-					</ul>
-				</li>
-				<li>Raw code snippet that includes a proper response header for the most suitable media type of the target data format:
+				<li>Request raw code snippet served using the proper media type for the target data format:
 					<pre>http://rdf-translator.appspot.com/convert/&lt;source&gt;/&lt;target&gt;/&lt;uri&gt;</pre>
 					Examples:
 					<ul>
@@ -109,15 +101,23 @@
 						<li><a href="/convert/detect/pretty-xml/http%3A%2F%2Fwww.ebusiness-unibw.org">Input format is detected automatically</a></li>
 					</ul>
 				</li>
-				<li>The converter also permits to perform an HTTP POST request with data attached to it. The following box shows the URI pattern understood by the API:
-					<pre>http://rdf-translator.appspot.com/convert/&lt;source&gt;/&lt;target&gt;/content</pre>
-					The data attached in the request body must conform to the following pattern:
+				<li>Request a highlighted code snippet formatted using HTML and CSS:
+					<pre>http://rdf-translator.appspot.com/convert/&lt;source&gt;/&lt;target&gt;<strong>/html</strong>/&lt;uri&gt;</pre>
+					Examples:
+					<ul>
+						<li><a href="/convert/rdfa/pretty-xml/html/http%3A%2F%2Fwww.ebusiness-unibw.org">URI, source data format, and target data format are given</a></li>
+						<li><a href="/convert/detect/pretty-xml/html/http%3A%2F%2Fwww.ebusiness-unibw.org">Input format is detected automatically</a></li>
+					</ul>
+				</li>
+				<li>In addition, the converter permits to perform an HTTP POST request with data attached to it in the request body. The following box shows the URI pattern that is understood by the API:
+					<pre>http://rdf-translator.appspot.com/convert/&lt;source&gt;/&lt;target&gt;<strong>/content</strong></pre>
+					The HTTP POST method requires the request body to comply with the following pattern:
 					<pre>content=&lt;data&gt;</pre>
 					Example:
 					<pre>curl -d "content=@prefix : &lt;http://example.org/#&gt; . :a :b :c ." http://rdf-translator.appspot.com/convert/n3/nt/content</pre>
 				</li>
 			</ol>
-			<p>Eligible values that can be supplied for the source and the target data formats are:</p>
+			<p>Eligible values that can be supplied for source and target data formats are:</p>
 			<ul>
 				<li>
 					source &rarr; <pre>rdfa | microdata | xml | n3 | nt | rdf-json | json-ld | trix | <strong>detect</strong></pre>
