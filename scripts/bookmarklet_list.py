@@ -3,6 +3,8 @@
 """
 bookmarklet_list.py
 
+This module serves to create a matrix of bookmarklets for the RDF Translator HTML page.
+
 Created by Alex Stolz on 2011-12-19.
 Copyright (c) 2011 Universität der Bundeswehr München. All rights reserved.
 """
@@ -11,7 +13,8 @@ import sys
 import os
 
 
-def main():
+def create_matrix():
+    """Generates the matrix."""
     input_formats = [
         "[detect]",
         "rdfa",
@@ -81,5 +84,5 @@ def main():
     f.close()
 
 if __name__ == '__main__':
-    main()
+    create_matrix()
 

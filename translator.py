@@ -1,7 +1,43 @@
 # encoding: utf-8
+"""
+translator.py
+
+This file is part of RDF Translator.
+
+Copyright 2011, 2012 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
+
+RDF Translator is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+RDF Translator is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with RDF Translator.  If not, see <http://www.gnu.org/licenses/>.
+
+
+This module converts between various syntaxes of RDF.
+
+def createSnippet(inputrdf, format): contacts external server for converting to RDFa or Microdata
+def getPrefixDict(url): fetches unknown prefixes from prefix.cc on-line service
+def pygmentize(text, format): returns respective HTML code of source code to highlight
+def convert(f, do_pygmentize, file_format, source_format, target_format): converts input data (file or content)
+    from a source format to a target format
+"""
+
 import sys
 sys.path.append("lib")
 import re
+import logging
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, JavascriptLexer
+import urllib
+from google.appengine.api import urlfetch
 
 import rdflib
 import rdflib_microdata
@@ -15,13 +51,6 @@ rdflib.plugin.register("rdf-json-pretty", Serializer, "rdfextras.serializers.rdf
 rdflib.plugin.register("json-ld", Parser, "rdfextras.parsers.jsonld", "JsonLDParser")
 rdflib.plugin.register("json-ld", Serializer, "rdfextras.serializers.jsonld", "JsonLDSerializer")
 
-from pygments import highlight
-from pygments.formatters import HtmlFormatter
-from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, JavascriptLexer
-
-from google.appengine.api import urlfetch
-import urllib
-
 import socket
 socket.setdefaulttimeout(10)
 
@@ -29,8 +58,6 @@ try:
   import json
 except ImportError:
   import simplejson as json
-
-import logging
 
 known_vocabs = {
     "eco": "http://www.ebusiness-unibw.org/ontologies/eclass/5.1.4/#",
@@ -70,7 +97,9 @@ known_vocabs = {
     "v": "http://rdf.data-vocabulary.org/#"
 }
 
+
 def createSnippet(inputrdf, format="rdfa"):
+    """Connects with external server for converting to RDFa and Microdata."""
     # test connection
     HOST1 = False
     result = urlfetch.fetch(url="http://rhizomik.net:80/", allow_truncated=True, deadline=10)
@@ -109,6 +138,7 @@ def createSnippet(inputrdf, format="rdfa"):
     return ""
 
 def getPrefixDict(url):
+    """Fetches unknown prefixes from prefix.cc on-line service."""
     global known_vocabs
     # add if not in dict of known vocabularies
     if not url in known_vocabs.values():
@@ -121,6 +151,7 @@ def getPrefixDict(url):
     return []
 
 def pygmentize(text, format):
+    """Returns respective HTML snippet of a source code aimed to be highlighted."""
     if format == "n3" or format == "nt":
         lexer = sw.Notation3Lexer()
     elif format == "pretty-xml" or format == "xml" or format == "trix":
@@ -132,6 +163,7 @@ def pygmentize(text, format):
     return highlight(text, lexer, HtmlFormatter())
 
 def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", target_format="pretty-xml"):
+    """Converts input data (file or content) from a given source format to a given target format."""
     global known_vocabs
     
     final_format = None
