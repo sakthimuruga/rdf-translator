@@ -1,37 +1,57 @@
 # encoding: utf-8
-#
-# Copyright 2007 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-import os
+"""
+main.py
 
-#from google.appengine.ext import webapp
-#from google.appengine.ext.webapp import util
+This file is part of RDF Translator.
+
+Copyright 2011, 2012 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich..
+
+RDF Translator is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+RDF Translator is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with RDF Translator.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Main page of the converter, providing the necessary request handlers.
+
+class TranslatorHandler: request handler
+"""
+
+import os
+import logging
 import webapp2
 
 import translator
+import rdflib
 from rdflib.parser import create_input_source
-import logging
 
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+__author__ = "Alex Stolz"
+__copyright__ = "Copyright 2011, Universitaet der Bundeswehr Munich"
+__credits__ = ["Martin Hepp", "Andreas Radinger"]
+__license__ = "LGPL"
+__version__ = "1.0"
+__maintainer__ = "Alex Stolz"
+__email__ = "alex.stolz@ebusiness-unibw.org"
+__status__ = "Deployment"
+
 class TranslatorHandler(webapp2.RequestHandler):
+    """Common request handler."""
     
     # (from)/(to)/(html?)/(url)
     def prepareArgs(self, arg1, arg2, arg3, arg4, arg5):
+        """Read in arguments and prepare further processing."""
         args = [arg1, arg2, arg3, arg4, arg5]
         
         self.html = False
@@ -78,6 +98,7 @@ class TranslatorHandler(webapp2.RequestHandler):
                 self.page = "http://%s" % self.page
     
     def processRequest(self):
+        """Interpret a request, relay to further processing and prepare response headers."""
         if self.html == True:
             self.do_pygmentize = True
             self.response.headers['Content-Type'] = "text/html"
@@ -155,11 +176,13 @@ class TranslatorHandler(webapp2.RequestHandler):
 </html>"""
               
     def head(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
+        """Handle HTTP HEAD requests."""
         self.do_pygmentize = False
         self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
     
     def get(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
+        """Handle HTTP GET requests."""
         self.do_pygmentize = False
         self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
@@ -167,6 +190,7 @@ class TranslatorHandler(webapp2.RequestHandler):
             self.response.out.write(self.response_string)  
         
     def post(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
+        """Handle HTTP POST requests."""
         self.do_pygmentize = False
         self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
