@@ -38,7 +38,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 __author__ = "Alex Stolz"
-__copyright__ = "Copyright 2011, Universitaet der Bundeswehr Munich"
+__copyright__ = "Copyright 2011-2012, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
 __version__ = "1.0"
@@ -62,7 +62,7 @@ class TranslatorHandler(webapp2.RequestHandler):
         if not args[0]:
             # old request using /parse?if=<if>&of=<of>&url=<uri><&html=1>
             self.page = self.request.get("url")
-            self.source_format = self.request.get("if")
+            self.source_format = self.request.get("if") or "detect"
             self.target_format = self.request.get("of")
             self.html_string = ""
             if self.request.get("html") == "1":
