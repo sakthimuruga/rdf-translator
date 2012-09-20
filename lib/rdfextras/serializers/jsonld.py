@@ -8,8 +8,6 @@ Example usage::
 
     >>> from rdflib import Graph, plugin
     >>> from rdflib.serializer import Serializer
-    >>> plugin.register('json-ld', Serializer,
-    ...     'rdfextras.serializers.jsonld', 'JsonLDSerializer')
 
     >>> testrdf = '''
     ... @prefix dc: <http://purl.org/dc/terms/> .
@@ -34,6 +32,7 @@ Example usage::
     }
 
 """
+
 # NOTE: This code writes the entire JSON object into memory before serialising,
 # but we should consider streaming the output to deal with arbitrarily large
 # graphs.
@@ -59,7 +58,7 @@ class JsonLDSerializer(Serializer):
 
     def serialize(self, stream, base=None, encoding=None, **kwargs):
         """
-        @@ TODO: add docstring describing usage
+        @@ TODO: add docstring describing args and returned value type
         """
         encoding = encoding or 'utf-8'
         if encoding not in ('utf-8', 'utf-16'):
@@ -69,7 +68,7 @@ class JsonLDSerializer(Serializer):
         context_data = kwargs.get('context')
         generate_compact = kwargs.get('compact', True)
         indent = kwargs.get('indent', 2)
-        separators = (',',': ')
+        separators = (',', ': ')
         sort_keys = True
         tree = to_tree(self.store, context_data, base,
                 generate_compact=generate_compact)
@@ -81,7 +80,7 @@ class JsonLDSerializer(Serializer):
 
 def to_tree(graph, context_data=None, base=None, generate_compact=True):
     """
-    @@ TODO: add docstring describing usage
+    @@ TODO: add docstring describing args and returned value type
     """
 
     tree = {}
@@ -117,7 +116,7 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
     if len(nodes) == 1:
         tree.update(nodes[0])
     else:
-        tree[context.id_key] = nodes
+        tree[context.graph_key] = nodes
 
     return tree
 
@@ -147,11 +146,13 @@ def _key_and_node(state, p, objs):
         node = [repr_value(o) for o in objs]
     return p_key, node
 
+
 def _handles_for_property(state, p, objs):
     (graph, context, base) = state
     repr_value = lambda o: _to_raw_value(state, o)
     # context.shrink(o) if isinstance(o, URIRef) else o # py2.4 compat
-    iri_to_id = (lambda o: isinstance(o, URIRef) and context.shrink(o) or o) 
+    iri_to_id = (lambda o:
+            isinstance(o, URIRef) and context.shrink(o) or o)
     term = context.get_term(unicode(p))
     if term:
         p_key = term.key
@@ -166,7 +167,10 @@ def _handles_for_property(state, p, objs):
                 #o if unicode(o.datatype) == term.coercion
                 #        else _to_raw_value(state, o)
                 # for py24:
-                repr_value = (lambda o: (unicode(o.datatype) == term.coercion) and o or  _to_raw_value(state, o))
+                repr_value = (lambda o: (
+                        unicode(o.datatype) == term.coercion) \
+                        and o \
+                        or _to_raw_value(state, o))
     else:
         if not term and p == RDF.type:
             repr_value = iri_to_id
@@ -196,12 +200,15 @@ def _to_raw_value(state, o):
             return {context.lang_key: o.language,
                     context.literal_key: v}
         elif o.datatype:
-            if o.datatype in PLAIN_LITERAL_TYPES:
-                return o.toPython()
+             #https://github.com/RDFLib/rdflib-jsonld/issues/4
+             #serialize data type regardless
+             #if o.datatype in PLAIN_LITERAL_TYPES:
+             #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
                     context.literal_key: v}
         else:
             return v
+
 
 def _to_collection(state, subj):
     (graph, context, base) = state
@@ -212,5 +219,3 @@ def _to_collection(state, subj):
                                 for o in graph.items(subj))}
     else:
         return None
-
-
