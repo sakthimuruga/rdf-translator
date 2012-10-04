@@ -35,21 +35,32 @@ import re
 import logging
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import guess_lexer, get_lexer_for_mimetype, sw, XmlLexer, JavascriptLexer
+from pygments.lexers import guess_lexer, get_lexer_for_mimetype, XmlLexer, JavascriptLexer
+from notation3_lexer import Notation3Lexer
 import urllib
 from google.appengine.api import urlfetch
 
 import rdflib
-import rdflib_microdata
+from pyRdfa import pyRdfa
+from pyMicrodata import pyMicrodata
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
 
+"""
 rdflib.plugin.register("rdf-json", Parser, "rdfextras.parsers.rdfjson", "RdfJsonParser")
 rdflib.plugin.register("rdf-json", Serializer, "rdfextras.serializers.rdfjson", "RdfJsonSerializer")
 rdflib.plugin.register("rdf-json-pretty", Serializer, "rdfextras.serializers.rdfjson", "PrettyRdfJsonSerializer")
 
 rdflib.plugin.register("json-ld", Parser, "rdfextras.parsers.jsonld", "JsonLDParser")
 rdflib.plugin.register("json-ld", Serializer, "rdfextras.serializers.jsonld", "JsonLDSerializer")
+"""
+
+rdflib.plugin.register("rdf-json", Parser, "rdflib_rdfjson.rdfjson_parser", "RdfJsonParser")
+rdflib.plugin.register("rdf-json", Serializer, "rdflib_rdfjson.rdfjson_serializer", "RdfJsonSerializer")
+rdflib.plugin.register("rdf-json-pretty", Serializer, "rdflib_rdfjson.rdfjson_serializer", "PrettyRdfJsonSerializer")
+
+rdflib.plugin.register("json-ld", Parser, "rdflib_jsonld.jsonld_parser", "JsonLDParser")
+rdflib.plugin.register("json-ld", Serializer, "rdflib_jsonld.jsonld_serializer", "JsonLDSerializer")
 
 import socket
 socket.setdefaulttimeout(10)
@@ -153,7 +164,7 @@ def getPrefixDict(url):
 def pygmentize(text, format):
     """Returns respective HTML snippet of a source code aimed to be highlighted."""
     if format == "n3" or format == "nt":
-        lexer = sw.Notation3Lexer()
+        lexer = Notation3Lexer()
     elif format == "pretty-xml" or format == "xml" or format == "trix":
         lexer = XmlLexer()
     elif format == "rdf-json" or format == "rdf-json-pretty" or format == "json-ld":
@@ -181,9 +192,20 @@ def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", ta
             g.bind(key, value)
     
     if file_format == "string":
-        g.parse(data=f, format=source_format, publicID=base)
+        import StringIO
+        if source_format == "rdfa":
+            g = pyRdfa().graph_from_source(StringIO.StringIO(f))
+        elif source_format == "microdata":
+            g = pyMicrodata().graph_from_source(StringIO.StringIO(f))
+        else:
+            g.parse(data=f, format=source_format, publicID=base)
     else:
-        g.parse(f, format=source_format, publicID=base)
+        if source_format == "rdfa":
+            g = pyRdfa().graph_from_source(f)
+        elif source_format == "microdata":
+            g = pyMicrodata().graph_from_source(f)
+        else:
+            g.parse(f, format=source_format, publicID=base)
         # NOTE: has no effect with current RDFLib version, because it shows full URIs for subjects and objects
         #d = dict()
         #for s in g.subjects(None, None):
@@ -233,13 +255,24 @@ def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", ta
                     g.bind(key, value)
             
                 if file_format == "string":
-                    g.parse(data=f, format=source_format, publicID=base)
+                    import StringIO
+                    if source_format == "rdfa":
+                        g = pyRdfa().graph_from_source(StringIO.StringIO(f))
+                    elif source_format == "microdata":
+                        g = pyMicrodata().graph_from_source(StringIO.StringIO(f))
+                    else:
+                        g.parse(data=f, format=source_format, publicID=base)
                 else:
                     # NOTE: has no effect with current RDFLib version
                     #it = iter(xrange(len(ns_sorted)))
                     #for item in ns_sorted:
                     #    g.bind("ns%d"%it.next(), item)
-                    g.parse(f, format=source_format, publicID=base)
+                    if source_format == "rdfa":
+                        g = pyRdfa().graph_from_source(f)
+                    elif source_format == "microdata":
+                        g = pyMicrodata().graph_from_source(f)
+                    else:
+                        g.parse(f, format=source_format, publicID=base)
                             
                 serialization = g.serialize(format=target_format).decode("UTF-8")           
         

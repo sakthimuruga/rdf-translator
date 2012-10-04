@@ -4,7 +4,7 @@ main.py
 
 This file is part of RDF Translator.
 
-Copyright 2011, 2012 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich..
+Copyright 2011, 2012 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
 
 RDF Translator is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -28,6 +28,7 @@ class TranslatorHandler: request handler
 import os
 import logging
 import webapp2
+import traceback
 
 import translator
 import rdflib
@@ -41,10 +42,12 @@ __author__ = "Alex Stolz"
 __copyright__ = "Copyright 2011-2012, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
-__version__ = "1.0"
+__version__ = "1.1"
 __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
+
+debug = False
 
 class TranslatorHandler(webapp2.RequestHandler):
     """Common request handler."""
@@ -137,8 +140,11 @@ class TranslatorHandler(webapp2.RequestHandler):
                 if self.response_string.strip() == "" and self.source_format == "text/html": # fix microdata test
                     self.response_string = translator.convert(self.page, do_pygmentize=self.do_pygmentize, file_format="file", source_format="microdata", target_format=self.target_format)
             if self.response_string.strip() == "":
-                raise Exception
+                raise Exception("empty result returned")
         except Exception, e:
+            if debug:
+                tb = traceback.format_exc()
+                e = tb
             self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.source_format, self.target_format, str(e))
             
         #self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
@@ -229,3 +235,21 @@ application = webapp2.WSGIApplication([
 ## commented lines for the creation of prefixes -> qnames for subjects and objects
 # rdflib/parser.py:67
 ## user-agent string of http header to "Python RDF Translator (http://rdf-translator.appspot.com/)", otherwise certain web pages will obfuscate certain content, i.e. rich snippet code
+
+
+# new:
+# rdflib_rdfjson/rdfjson_parser.py:134
+## val = BNode(value[2:])#val[2:])
+# pyMicrodata/microdata.py:314-316
+## # rdf-translator doesn't need this!
+## #list = generate_RDF_collection( self.graph, item_list )
+## #self.graph.add( (URIRef(self.base),self.ns_md["item"],list) )
+# pyMicrodata/__init__.py:
+##if rdflib.__version__ >= "3.0.0" :
+##	from rdflib	import RDF  as ns_rdf
+##	from rdflib	import RDFS as ns_rdfs
+##	from rdflib import Graph # added by AS
+##else :
+##	from rdflib.RDFS	import RDFSNS as ns_rdfs
+##	from rdflib.RDF		import RDFNS  as ns_rdf
+##	from rdflib.Graph import Graph # added by AS
