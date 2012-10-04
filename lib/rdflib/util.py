@@ -34,7 +34,6 @@ from time import altzone
 #from time import daylight
 from time import gmtime
 from time import localtime
-from time import mktime
 from time import time
 from time import timezone
 
@@ -61,6 +60,10 @@ from rdflib.term import URIRef
 __all__ = ['list2set', 'first', 'uniq', 'more_than', 'to_term', 'from_n3','date_time', 'parse_date_time', 'check_context', 'check_subject', 'check_predicate', 'check_object', 'check_statement', 'check_pattern']
 
 def list2set(seq):
+    """
+    Return a new list without duplicates. 
+    Preserves the order, unlike set(seq)
+    """
     seen = set()
     return [ x for x in seq if x not in seen and not seen.add(x)]
 
@@ -112,35 +115,54 @@ def to_term(s, default=None):
         raise Exception(msg)
 
 def from_n3(s, default=None, backend=None):
-    """
+    r'''
     Creates the Identifier corresponding to the given n3 string. 
-    """
+    
+        >>> from_n3('<http://ex.com/foo>') == URIRef('http://ex.com/foo')
+        True
+        >>> from_n3('"foo"@de') == Literal('foo', lang='de')
+        True
+        >>> from_n3('"""multi\nline\nstring"""@en') == Literal('multi\nline\nstring', lang='en')
+        True
+        >>> from_n3('42') == Literal(42)
+        True
+        
+    '''
+    # TODO: should be able to handle prefixes given as opt. argument maybe: from_n3('rdfs:label')
     if not s:
         return default
     if s.startswith('<'):
         return URIRef(s[1:-1])
     elif s.startswith('"'):
-        # TODO: would a regex be faster?
-        value, rest = s.rsplit('"', 1)
-        value = value[1:] # strip leading quote
-        if rest.startswith("@"):
-            if "^^" in rest:
-                language, rest = rest.rsplit('^^', 1)
-                language = language[1:] # strip leading at sign
-            else:
+        if s.startswith('"""'):
+            quotes = '"""'
+        else:
+            quotes =  '"'
+        value, rest = s.rsplit(quotes, 1)
+        value = value[len(quotes):] # strip leading quotes
+        datatype = None
+        language = None
+        
+        # as a given datatype overrules lang-tag check for it first
+        dtoffset = rest.rfind('^^')
+        if dtoffset >= 0:
+            # found a datatype
+            # datatype has to come after lang-tag so ignore everything before
+            # see: http://www.w3.org/TR/2011/WD-turtle-20110809/#prod-turtle2-RDFLiteral
+            datatype = rest[dtoffset+2:]
+        else:
+            if rest.startswith("@"):
                 language = rest[1:] # strip leading at sign
-                rest = ''
-        else:
-            language = None
-        if rest.startswith("^^"):
-            datatype = rest[3:-1]
-        else:
-            datatype = None
-        value = value.replace('\\"', '"').replace('\\\\', '\\')
+        
+        value = value.replace(r'\"', '"').replace('\\\\', '\\')
         # Hack: this should correctly handle strings with either native unicode
         # characters, or \u1234 unicode escapes.
         value = value.encode("raw-unicode-escape").decode("unicode-escape")
         return Literal(value, language, datatype)
+    elif s == 'true' or s == 'false':
+        return Literal(s == 'true')
+    elif s.isdigit():
+        return Literal(int(s))
     elif s.startswith('{'):
         identifier = from_n3(s[1:-1])
         return QuotedGraph(backend, identifier)
@@ -272,10 +294,6 @@ def parse_date_time(val):
     year, month, day = ymd.split("-")
     hour, minute, second = hms.split(":")
 
-    t = mktime((int(year), int(month), int(day), int(hour),
-                int(minute), int(second), 0, 0, 0))
-    t = t - timezone + tz_offset
-    # Alternative handles case when local time is DST
     t = timegm((int(year), int(month), int(day), int(hour),
                 int(minute), int(second), 0, 0, 0))
     t = t + tz_offset

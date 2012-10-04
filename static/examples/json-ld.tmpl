@@ -1,63 +1,30 @@
 {
   "@context": {
-    "commerce": "http://search.yahoo.com/searchmonkey/commerce/",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "vcard": "http://www.w3.org/2006/vcard/ns#",
-    "xhv": "http://www.w3.org/1999/xhtml/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#"
+	"gr": "http://purl.org/goodrelations/v1#"
   },
-  "@id": [
-    {
-      "@id": "http://www.ebusiness-unibw.org",
-      "xhv:icon": {
-        "@id": "http://www.ebusiness-unibw.org/favicon.ico"
+  "@id": "http://www.acme.com/#store",
+  "@type": "gr:Location",
+  "gr:hasOpeningHoursSpecification": {
+    "@type": "gr:OpeningHoursSpecification",
+    "gr:closes": "20:00:00",
+    "gr:hasOpeningHoursDayOfWeek": [
+      {
+        "@id": "gr:Thursday"
       },
-      "xhv:stylesheet": {
-        "@id": "http://www.ebusiness-unibw.org/ebindex.css"
+      {
+        "@id": "gr:Wednesday"
+      },
+      {
+        "@id": "gr:Friday"
+      },
+      {
+        "@id": "gr:Monday"
+      },
+      {
+        "@id": "gr:Tuesday"
       }
-    },
-    {
-      "@id": "http://www.ebusiness-unibw.org#vcard",
-      "@type": [
-        "vcard:VCard",
-        "commerce:Business"
-      ],
-      "rdfs:label": {
-        "@language": "en",
-        "@value": "E-Business and Web Science Research Group"
-      },
-      "vcard:adr": {
-        "@type": "vcard:Address",
-        "vcard:country-name": {
-          "@language": "en",
-          "@value": "Germany"
-        },
-        "vcard:locality": {
-          "@language": "en",
-          "@value": "Neubiberg"
-        },
-        "vcard:postal-code": "85579",
-        "vcard:region": "Bavaria",
-        "vcard:street-address": {
-          "@language": "en",
-          "@value": "Werner-Heisenberg-Weg 39"
-        }
-      },
-      "vcard:fn": {
-        "@language": "en",
-        "@value": "E-Business and Web Science Research Group"
-      },
-      "vcard:geo": {
-        "vcard:latitude": 48.081662999999999,
-        "vcard:longitude": 11.637912
-      },
-      "vcard:photo": {
-        "@id": "http://www.ebusiness-unibw.org/logo.png"
-      },
-      "vcard:tel": "+49-89-6004-4217",
-      "vcard:url": {
-        "@id": "http://www.ebusiness-unibw.org/"
-      }
-    }
-  ]
+    ],
+    "gr:opens": "08:00:00"
+  },
+  "gr:name": "Hepp's Happy Burger Restaurant"
 }

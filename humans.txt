@@ -1,5 +1,5 @@
 /* TEAM */
-  Develop & Main Design: Alex Stolz
+  Development, Testing & Main Design: Alex Stolz
   Twitter: @stalsoft
   Site: http://www.stalsoft.com/
   Location: Neubiberg, Germany
@@ -9,12 +9,12 @@
   Site: http://www.heppnetz.de/
   Location: Neubiberg, Germany
 
-  Standard Man: Andreas Radinger
+  Standards Compliance and Testing: Andreas Radinger
   Site: http://www.unibw.de/ebusiness/team/andreas-radinger/
   Location: Neubiberg, Germany
 
 /* SITE */
-  Last update: 23/04/2012
+  Last update: Oct 4, 2012
   Language: English
   Doctype: HTML5, CSS3, JS
   IDE: TextMate, GAE, Gimp
@@ -24,7 +24,7 @@
   Site: http://www.bmbf.de/en/
   Location: Berlin, Germany
 
-  Feedback Loop: Bene Rodriguez-Castro, Mozhi Ge, Uwe Stoll, László Török
+  Feedback Loop: Bene Rodriguez-Castro, László Török, Uwe Stoll, Mouzhi Ge
   Location: Neubiberg, Germany
 
   And, of course, all people who submitted valuable feedback and suggestions for improvement!

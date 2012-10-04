@@ -24,7 +24,7 @@ def create_matrix():
         "nt",
         "rdf-json",
         "json-ld",
-        "trix"]
+        ]
         
     output_formats = [
         "rdfa",
@@ -36,7 +36,8 @@ def create_matrix():
         "rdf-json-pretty",
         "rdf-json",
         "json-ld",
-        "trix"]
+        #"trix",
+        ]
         
     service = "http://rdf-translator.appspot.com/convert"
     
