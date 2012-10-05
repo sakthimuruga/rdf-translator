@@ -47,7 +47,7 @@ __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
 
-debug = False
+debug = True
 
 class TranslatorHandler(webapp2.RequestHandler):
     """Common request handler."""

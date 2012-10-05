@@ -182,7 +182,7 @@ def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", ta
     
     if target_format == "rdfa" or target_format == "microdata":
         final_format = target_format
-        target_format = "pretty-xml"
+        #target_format = "pretty-xml" # not necessary for local rdfa/microdata serialization
         base = "http://rdf-translator.appspot.com/"
     
     g = rdflib.Graph()
@@ -277,9 +277,10 @@ def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", ta
                 serialization = g.serialize(format=target_format).decode("UTF-8")           
         
         # final format is rdfa or microdata, made detour over rdf/xml
-        if final_format:
-            rdf = g.serialize(format=target_format).decode("UTF-8")
-            serialization = createSnippet(rdf, final_format).decode("UTF-8")
+        # not necessary for local rdfa/microdata serialization
+        #if final_format == "microdata" or final_format == "rdfa":
+        #    rdf = g.serialize(format=target_format).decode("UTF-8")
+        #    serialization = createSnippet(rdf, final_format).decode("UTF-8")     
         
         if do_pygmentize:
             return pygmentize(serialization, target_format)
