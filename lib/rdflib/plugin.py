@@ -144,6 +144,10 @@ register('trix', Serializer,
                 'rdflib.plugins.serializers.trix', 'TriXSerializer')
 register("nquads", Serializer,
                 'rdflib.plugins.serializers.nquads', 'NQuadsSerializer')
+register('rdfa', Serializer,
+                'rdflib.plugins.serializers.rdfa', 'RdfaSerializer')
+register('microdata', Serializer,
+                'rdflib.plugins.serializers.microdata', 'MicrodataSerializer')
 
 register('application/rdf+xml', Parser,
                 'rdflib.plugins.parsers.rdfxml', 'RDFXMLParser')
