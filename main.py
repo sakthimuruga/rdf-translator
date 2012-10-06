@@ -42,12 +42,12 @@ __author__ = "Alex Stolz"
 __copyright__ = "Copyright 2011-2012, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
-__version__ = "1.2"
+__version__ = "1.2.1"
 __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
 
-debug = True
+debug = False
 
 class TranslatorHandler(webapp2.RequestHandler):
     """Common request handler."""
