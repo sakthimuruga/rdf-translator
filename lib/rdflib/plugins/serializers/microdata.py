@@ -23,8 +23,8 @@ class MicrodataSerializer(Serializer):
     
     def __init__(self, store, max_depth=3):
         super(MicrodataSerializer, self).__init__(store)
-        self.namespaces = {}
-        self._ns_rewrite = {}
+        #self.namespaces = {}
+        #self._ns_rewrite = {}
         
     def relativize(self, uri, base=None):
         if not base:
@@ -118,15 +118,15 @@ class MicrodataSerializer(Serializer):
         #for prefix in namespaces:
         #    write("\n  xmlns:%s=\"%s\"" % (prefix, namespaces[prefix]))
         #write(">")
-        #write("<div>")
+        write("<div>")
         
         # Write out subjects that can not be inline
         for subject in store.subjects():
             if (None, None, subject) in store:
                 if (subject, None, subject) in store:
-                    self.subject(subject, 0)
+                    self.subject(subject, 1)
             else:
-                self.subject(subject, 0)
+                self.subject(subject, 1)
         
         # write out anything that has not yet been reached
         # write out BNodes last (to ensure they can be inlined where possible)
@@ -135,14 +135,14 @@ class MicrodataSerializer(Serializer):
             if isinstance(subject, BNode):
                 bnodes.add(subject)
                 continue
-            self.subject(subject, 0)
+            self.subject(subject, 1)
             
         #now serialize only those BNodes that have not been serialized yet
         for bnode in bnodes:
             if bnode not in self.__serialized:
-                self.subject(subject, 0)
+                self.subject(subject, 1)
             
-        #write("\n</div>")
+        write("\n</div>")
         self.__serialized = None
 
 
