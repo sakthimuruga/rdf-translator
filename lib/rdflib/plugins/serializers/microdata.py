@@ -118,15 +118,15 @@ class MicrodataSerializer(Serializer):
         #for prefix in namespaces:
         #    write("\n  xmlns:%s=\"%s\"" % (prefix, namespaces[prefix]))
         #write(">")
-        write("<div>")
+        #write("<div>")
         
         # Write out subjects that can not be inline
         for subject in store.subjects():
             if (None, None, subject) in store:
                 if (subject, None, subject) in store:
-                    self.subject(subject, 1)
+                    self.subject(subject, 0)
             else:
-                self.subject(subject, 1)
+                self.subject(subject, 0)
         
         # write out anything that has not yet been reached
         # write out BNodes last (to ensure they can be inlined where possible)
@@ -135,14 +135,14 @@ class MicrodataSerializer(Serializer):
             if isinstance(subject, BNode):
                 bnodes.add(subject)
                 continue
-            self.subject(subject, 1)
+            self.subject(subject, 0)
             
         #now serialize only those BNodes that have not been serialized yet
         for bnode in bnodes:
             if bnode not in self.__serialized:
-                self.subject(subject, 1)
+                self.subject(subject, 0)
             
-        write("\n</div>")
+        #write("\n</div>")
         self.__serialized = None
 
 
@@ -228,11 +228,10 @@ class MicrodataSerializer(Serializer):
                                                 RDF.type, 
                                                 [OWL_NS.Class,RDFS.Class]))) \
                       and isinstance(object, URIRef):
-                    write("%s<link itemprop=\"%s\"" % (indent, self.relativize(predicate, context)))
-                    write(" href=\"%s\" />" % self.relativize(object))
+                    write("%s<link itemprop=\"%s\" href=\"%s\" />" % (indent, self.relativize(predicate, context), self.relativize(object)))
                     
                 elif depth <= self.max_depth:
-                    write("%s<div itemprop=\"%s\"" % (indent, self.relativize(predicate)))
+                    write("%s<div itemprop=\"%s\"" % (indent, self.relativize(predicate, context)))
                     if first(store.objects(object, RDF.type)):
                         write(" itemtype=\"%s\"" % first(store.objects(object, RDF.type)))
                     if isinstance(object, URIRef):
@@ -247,14 +246,14 @@ class MicrodataSerializer(Serializer):
                     and len(list(store.subjects(object=object))) == 1:
                         #inline blank nodes if they haven't been serialized yet and are
                         #only referenced once (regardless of depth)
-                        write(">")
+                        #write(">")
                         self.subject(object, depth+1)
-                        write(indent)
+                        #write(indent)
                     else:
-                        write(" href=\"%s\" />" % fix(object))
+                        write("%s<link itemprop=\"%s\" href=\"%s\" />" % (indent, self.relativize(predicate, context), fix(object)))
                     
                 else:
-                    write(" href=\"%s\" />" % self.relativize(object))
+                    write("%s<link itemprop=\"%s\" href=\"%s\" />" % (indent, self.relativize(predicate, context), self.relativize(object)))
                 
                 
 # TODO:
