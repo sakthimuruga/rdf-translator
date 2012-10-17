@@ -30,7 +30,7 @@ $(function() {
     $(".example").each(function() {
        $(this).click(function() {
           $.get("/static/examples/"+$(this).attr("name")+".tmpl", function(data) {
-              $("#textbox").html(data);
+              $("#textbox").val(data);
           });
           //$("#textbox").load("/static/examples/"+$(this).attr("name")+".tmpl");
           $("#in").val($(this).attr("name"));
