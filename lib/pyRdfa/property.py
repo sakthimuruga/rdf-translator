@@ -15,8 +15,8 @@ U{W3C® SOFTWARE NOTICE AND LICENSE<href="http://www.w3.org/Consortium/Legal/200
 """
 
 """
-$Id: property.py,v 1.11 2012/06/12 11:47:11 ivan Exp $
-$Date: 2012/06/12 11:47:11 $
+$Id: property.py,v 1.12 2012/11/16 17:51:53 ivan Exp $
+$Date: 2012/11/16 17:51:53 $
 """
 
 import re
@@ -31,9 +31,9 @@ else :
 	from rdflib.RDF	    import RDFNS as ns_rdf
 	from rdflib.Literal import XSDToPython
 
-from pyRdfa	           import IncorrectBlankNodeUsage, IncorrectLiteral, err_no_blank_node, ns_xsd 
-from pyRdfa.utils      import has_one_of_attributes, return_XML
-from pyRdfa.host.html5 import handled_time_types
+from .	         import IncorrectBlankNodeUsage, IncorrectLiteral, err_no_blank_node, ns_xsd 
+from .utils      import has_one_of_attributes, return_XML
+from .host.html5 import handled_time_types
 
 XMLLiteral  = ns_rdf["XMLLiteral"]
 HTMLLiteral = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML") 

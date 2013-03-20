@@ -110,6 +110,10 @@ class TranslatorHandler(webapp2.RequestHandler):
                 self.response.headers['Content-Type'] = "application/rdf+xml"
             elif self.target_format == "n3":
                 self.response.headers['Content-Type'] = "text/n3"
+            elif self.target_format == "turtle":
+                self.response.headers['Content-Type'] = "text/turtle"
+            elif self.target_format == "nquads":
+                self.response.headers['Content-Type'] = "text/x-nquads"
             elif self.target_format == "nt":
                 self.response.headers['Content-Type'] = "text/plain"
             elif self.target_format == "trix":
