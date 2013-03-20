@@ -155,7 +155,7 @@ U{W3C® SOFTWARE NOTICE AND LICENSE<href="http://www.w3.org/Consortium/Legal/200
 """
 
 """
- $Id: __init__.py,v 1.82 2012/08/21 10:28:50 ivan Exp $
+ $Id: __init__.py,v 1.90 2013-02-05 13:03:27 ivan Exp $
 """
 
 __version__ = "3.4.3"
@@ -172,6 +172,11 @@ else :
 	from StringIO import StringIO
 
 import os
+import xml.dom.minidom
+if PY3 :
+	from urllib.parse import urlparse
+else :
+	from urlparse import urlparse
 
 import rdflib
 from rdflib	import URIRef
@@ -183,21 +188,15 @@ if rdflib.__version__ >= "3.0.0" :
 	from rdflib	import RDFS as ns_rdfs
 	from rdflib	import Graph
 else :
-	from rdflib.RDFS	import RDFSNS as ns_rdfs
-	from rdflib.RDF		import RDFNS  as ns_rdf
+	from rdflib.RDFS  import RDFSNS as ns_rdfs
+	from rdflib.RDF	  import RDFNS  as ns_rdf
 	from rdflib.Graph import Graph
-
-from pyRdfa.extras.httpheader import acceptable_content_type, content_type
-
-import xml.dom.minidom
-
-if PY3 :
-	from urllib.parse import urlparse
-else :
-	from urlparse import urlparse
 
 # Namespace, in the RDFLib sense, for the rdfa vocabulary
 ns_rdfa		= Namespace("http://www.w3.org/ns/rdfa#")
+
+from .extras.httpheader   import acceptable_content_type, content_type
+from .transform.prototype import handle_prototypes
 
 # Vocabulary terms for vocab reporting
 RDFA_VOCAB  = ns_rdfa["usesVocabulary"]
@@ -253,10 +252,11 @@ RDFA_Error                  = ns_rdfa["Error"]
 RDFA_Warning                = ns_rdfa["Warning"]
 RDFA_Info                   = ns_rdfa["Information"]
 NonConformantMarkup         = ns_rdfa["DocumentError"]
-UnresolvablePrefix          = ns_rdfa["UnresolvedCURIEPrefix"]
-UnresolvableReference       = ns_rdfa["UnresolvedCURIEReference"]
+UnresolvablePrefix          = ns_rdfa["UnresolvedCURIE"]
+UnresolvableReference       = ns_rdfa["UnresolvedCURIE"]
 UnresolvableTerm            = ns_rdfa["UnresolvedTerm"]
 VocabReferenceError         = ns_rdfa["VocabReferenceError"]
+PrefixRedefinitionWarning   = ns_rdfa["PrefixRedefinition"]
 
 FileReferenceError          = ns_distill["FileReferenceError"]
 HTError                     = ns_distill["HTTPError"]
@@ -286,17 +286,18 @@ err_no_CURIE_in_safe_CURIE          = "Safe CURIE is used, but the value does no
 err_undefined_terms                 = "'%s' is used as a term, but has not been defined as such; ignored"
 err_non_legal_CURIE_ref             = "Relative URI is not allowed in this position (or not a legal CURIE reference) '%s'; ignored"
 err_undefined_CURIE                 = "Undefined CURIE: '%s'; ignored"
+err_prefix_redefinition             = "Prefix '%s' (defined in the initial RDFa context or in an ancestor) is redefined"
 
 err_unusual_char_in_URI             = "Unusual character in uri: %s; possible error?"
 
 #############################################################################################
 
-from pyRdfa.state            import ExecutionContext
-from pyRdfa.parse            import parse_one_node
-from pyRdfa.options          import Options
-from pyRdfa.transform        import top_about, empty_safe_curie, vocab_for_role
-from pyRdfa.utils            import URIOpener
-from pyRdfa.host             import HostLanguage, MediaTypes, preferred_suffixes, content_to_host_language
+from .state            import ExecutionContext
+from .parse            import parse_one_node
+from .options          import Options
+from .transform        import top_about, empty_safe_curie, vocab_for_role
+from .utils            import URIOpener
+from .host             import HostLanguage, MediaTypes, preferred_suffixes, content_to_host_language
 
 # Environment variable used to characterize cache directories for RDFa vocabulary files. 
 CACHE_DIR_VAR           = "PyRdfaCacheDir"
@@ -431,7 +432,6 @@ class pyRdfa :
 						self.required_base = name
 					return url_request.data
 				else :
-					self.base = name
 					# Creating a File URI for this thing
 					if self.required_base == None :
 						self.required_base = "file://" + os.path.join(os.getcwd(),name)
@@ -486,7 +486,7 @@ class pyRdfa :
 		
 		# Create the initial state. This takes care of things
 		# like base, top level namespace settings, etc.
-		state = ExecutionContext(topElement, default_graph, base=self.base, options=self.options, rdfa_version=self.rdfa_version)
+		state = ExecutionContext(topElement, default_graph, base=self.required_base if self.required_base != None else "", options=self.options, rdfa_version=self.rdfa_version)
 
 		# Perform the built-in and external transformations on the HTML tree. 
 		for trans in self.options.transformers + builtInTransformers :
@@ -494,16 +494,23 @@ class pyRdfa :
 		
 		# This may have changed if the state setting detected an explicit version information:
 		self.rdfa_version = state.rdfa_version
-				
+
 		# The top level subject starts with the current document; this
 		# is used by the recursion
 		# this function is the real workhorse
 		parse_one_node(topElement, default_graph, None, state, [])
+
+		# Massage the output graph in term of rdfa:Pattern and rdfa:copy
+		handle_prototypes(default_graph)
 		
 		# If the RDFS expansion has to be made, here is the place...
 		if self.options.vocab_expansion :
-			from pyRdfa.rdfs.process import process_rdfa_sem
+			from .rdfs.process import process_rdfa_sem
 			process_rdfa_sem(default_graph, self.options)
+
+		# Experimental feature: nothing for now, this is kept as a placeholder
+		if self.options.experimental_features :
+			pass
 	
 		# What should be returned depends on the way the options have been set up
 		if self.options.output_default_graph :
@@ -542,9 +549,11 @@ class pyRdfa :
 			if options.output_processor_graph :
 				for t in options.processor_graph.graph :
 					tog.add(t)
+					if pgraph != None : pgraph.add(t)
 				for k,ns in options.processor_graph.graph.namespaces() :
 					tog.bind(k,ns)
-			options.reset_processor_graph()
+					if pgraph != None : pgraph.bind(k,ns)
+ 			options.reset_processor_graph()
 			return tog		
 
 		# Separating this for a forward Python 3 compatibility
@@ -608,7 +617,7 @@ class pyRdfa :
 							input = self._get_input(name)
 						else :
 							input.seek(0)
-						from pyRdfa.host import adjust_html_version
+						from .host import adjust_html_version
 						self.rdfa_version = adjust_html_version(input, self.rdfa_version)
 					except :
 						# if anyting goes wrong, it is not really important; rdfa version stays what it was...
@@ -616,7 +625,7 @@ class pyRdfa :
 					
 				else :
 					# in other cases an XML parser has to be used
-					from pyRdfa.host import adjust_xhtml_and_version
+					from .host import adjust_xhtml_and_version
 					parse = xml.dom.minidom.parse
 					dom = parse(input)
 					(adjusted_host_language, version) = adjust_xhtml_and_version(dom, self.options.host_language, self.rdfa_version)
@@ -762,27 +771,25 @@ def processURI(uri, outputFormat, form={}) :
 		
 	transformers = []
 	
-	if "rdfa_lite" in list(form.keys()) and form.getfirst("rdfa_lite").lower() == "true" :
-		from pyRdfa.transform.lite import lite_prune
-		transformers.append(lite_prune)
+	check_lite = "rdfa_lite" in list(form.keys()) and form.getfirst("rdfa_lite").lower() == "true"
 
 	# The code below is left for backward compatibility only. In fact, these options are not exposed any more,
 	# they are not really in use
 	if "extras" in list(form.keys()) and form.getfirst("extras").lower() == "true" :
-		from pyRdfa.transform.metaname              	import meta_transform
-		from pyRdfa.transform.OpenID                	import OpenID_transform
-		from pyRdfa.transform.DublinCore            	import DC_transform
+		from .transform.metaname              	import meta_transform
+		from .transform.OpenID                	import OpenID_transform
+		from .transform.DublinCore            	import DC_transform
 		for t in [OpenID_transform, DC_transform, meta_transform] :
 			transformers.append(t)
 	else :
 		if "extra-meta" in list(form.keys()) and form.getfirst("extra-meta").lower() == "true" :
-			from pyRdfa.transform.metaname import meta_transform
+			from .transform.metaname import meta_transform
 			transformers.append(meta_transform)
 		if "extra-openid" in list(form.keys()) and form.getfirst("extra-openid").lower() == "true" :
-			from pyRdfa.transform.OpenID import OpenID_transform
+			from .transform.OpenID import OpenID_transform
 			transformers.append(OpenID_transform)
 		if "extra-dc" in list(form.keys()) and form.getfirst("extra-dc").lower() == "true" :
-			from pyRdfa.transform.DublinCore import DC_transform
+			from .transform.DublinCore import DC_transform
 			transformers.append(DC_transform)
 
 	output_default_graph 	= True
@@ -820,7 +827,8 @@ def processURI(uri, outputFormat, form={}) :
 					  vocab_cache_report     = vocab_cache_report,
 					  refresh_vocab_cache    = refresh_vocab_cache,
 					  vocab_expansion        = vocab_expansion,
-					  embedded_rdf           = embedded_rdf
+					  embedded_rdf           = embedded_rdf,
+					  check_lite             = check_lite
 					  )
 	processor = pyRdfa(options = options, base = base, media_type = media_type, rdfa_version = rdfa_version)
 
@@ -852,7 +860,7 @@ def processURI(uri, outputFormat, form={}) :
 		elif outputFormat == "nt" or outputFormat == "turtle" :
 			retval = 'Content-Type: text/turtle; charset=utf-8\n'
 		elif outputFormat == "json-ld" or outputFormat == "json" :
-			retval = 'Content-Type: application/json; charset=utf-8\n'
+			retval = 'Content-Type: application/ld+json; charset=utf-8\n'
 		else :
 			retval = 'Content-Type: application/rdf+xml; charset=utf-8\n'
 		retval += '\n'

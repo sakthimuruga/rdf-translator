@@ -163,7 +163,7 @@ def getPrefixDict(url):
 
 def pygmentize(text, format):
     """Returns respective HTML snippet of a source code aimed to be highlighted."""
-    if format == "n3" or format == "nt":
+    if format == "n3" or format == "turtle" or format == "nt" or format == "nquads":
         lexer = Notation3Lexer()
     elif format == "pretty-xml" or format == "xml" or format == "trix":
         lexer = XmlLexer()
@@ -226,10 +226,10 @@ def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", ta
     if len(g) > 0:
         serialization = g.serialize(format=target_format).decode("UTF-8")
         
-        if target_format == "n3" or target_format == "pretty-xml" or target_format == "xml":
+        if target_format == "n3" or target_format == "turtle" or target_format == "pretty-xml" or target_format == "xml":
             d = {}
             # for n3, try to resolve missing prefixes with prefix.cc
-            if target_format == "n3":
+            if target_format == "n3" or target_format == "turtle":
                 from StringIO import StringIO
                 n3_file = StringIO(serialization)
                 for line in n3_file.readlines():
