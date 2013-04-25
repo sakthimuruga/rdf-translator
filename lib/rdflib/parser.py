@@ -85,8 +85,18 @@ class URLInputSource(InputSource):
             myheaders['Accept'] = 'application/rdf+xml, */*;q=0.1'
         elif format == 'n3':
             myheaders['Accept'] = 'text/n3, */*;q=0.1'
+        elif format == 'turtle':
+            myheaders['Accept'] = 'text/turtle, */*;q=0.1'
+        elif format == 'nquads':
+            myheaders['Accept'] = 'text/x-nquads, */*;q=0.1'
         elif format == 'nt':
             myheaders['Accept'] = 'text/plain, */*;q=0.1'
+        elif format == 'trix':
+            myheaders['Accept'] = 'application/xml, */*;q=0.1'
+        elif format == 'rdf-json' or format == 'rdf-json-pretty':
+            myheaders['Accept'] = 'application/json, */*;q=0.1'
+        elif format == 'json-ld':
+            myheaders['Accept'] = 'application/ld+json, */*;q=0.1'
         else:
             myheaders['Accept'] = (
                 'application/rdf+xml,text/rdf+n3;q=0.9,' +
