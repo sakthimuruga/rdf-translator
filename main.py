@@ -118,8 +118,10 @@ class TranslatorHandler(webapp2.RequestHandler):
                 self.response.headers['Content-Type'] = "text/plain"
             elif self.target_format == "trix":
                 self.response.headers['Content-Type'] = "application/xml"
-            elif self.target_format == "rdf-json" or self.target_format == "rdf-json-pretty" or self.target_format == "json-ld":
+            elif self.target_format == "rdf-json" or self.target_format == "rdf-json-pretty":
                 self.response.headers['Content-Type'] = "application/json"
+            elif self.target_format == "json-ld":
+                self.response.headers['Content-Type'] = "application/ld+json"
             elif self.target_format == "rdfa" or self.target_format == "microdata":
                 self.response.headers['Content-Type'] = "text/html"
             else:
