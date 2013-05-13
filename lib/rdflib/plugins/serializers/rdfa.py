@@ -104,11 +104,17 @@ class RdfaSerializer(Serializer):
         for predicate in possible:
             prefix, namespace, local = nm.compute_qname(predicate)
             namespaces[prefix] = namespace
-            
-        write("<div xmlns=\"http://www.w3.org/1999/xhtml\"")
-        for prefix in namespaces:
-            write("\n  xmlns:%s=\"%s\"" % (prefix, namespaces[prefix]))
-        write(">")
+         
+        write("<div xmlns=\"http://www.w3.org/1999/xhtml\"") 
+        if len(namespaces) > 0:
+            write("\n  prefix=\"") 
+            #write("<div xmlns=\"http://www.w3.org/1999/xhtml\"")
+            for prefix in namespaces:
+                write("\n    %s: %s" % (prefix, namespaces[prefix]))
+                #write("\n  xmlns:%s=\"%s\"" % (prefix, namespaces[prefix]))
+            write("\"\n  >")
+        else:
+            write(">")
         
         
         # Write out subjects that can not be inline

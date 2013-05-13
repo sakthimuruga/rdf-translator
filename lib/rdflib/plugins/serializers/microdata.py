@@ -187,6 +187,9 @@ class MicrodataSerializer(Serializer):
         store = self.store
         write = self.write
         indent = "\n"+indent_string*depth
+        
+        if str(predicate) == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":
+            predicate = URIRef("http://schema.org/additionalType")
 
         if isinstance(object, Literal):
             write("%s<meta itemprop=\"%s\"" % (indent, self.relativize(predicate, context)))
