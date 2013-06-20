@@ -3,14 +3,14 @@ This module defines the different types of terms. Terms are the kinds of
 objects that can appear in a quoted/asserted triple. This includes those
 that are core to RDF:
 
-* Blank Nodes
-* URI References
-* Literals (which consist of a literal value,datatype and language tag)
+* :class:`Blank Nodes <rdflib.term.BNode>`
+* :class:`URI References <rdflib.term.URIRef>`
+* :class:`Literals <rdflib.term.Literal>` (which consist of a literal value,datatype and language tag)
 
 Those that extend the RDF model into N3:
 
-* Formulae
-* Universal Quantifications (Variables)
+* :class:`Formulae <rdflib.graph.QuotedGraph>`
+* :class:`Universal Quantifications (Variables) <rdflib.term.Variable>`
 
 And those that are primarily for matching against 'Nodes' in the
 underlying Graph:
@@ -41,11 +41,12 @@ import warnings
 _LOGGER = logging.getLogger(__name__)
 
 import base64
+import xml.dom.minidom
 
 from urlparse import urlparse, urljoin, urldefrag
 from datetime import date, time, datetime
 from isodate import parse_time, parse_date, parse_datetime
-from re import sub
+from re import sub, compile
 
 
 try:
@@ -59,8 +60,27 @@ import rdflib
 from . import py3compat
 from rdflib.compat import numeric_greater
 
+
+
 b = py3compat.b
 
+skolem_genid = "/.well-known/genid/"
+rdflib_skolem_genid = "/.well-known/genid/rdflib/"
+skolems = {}
+
+
+_invalid_uri_chars = '<>" {}|\\^`'
+
+def _is_valid_uri(uri):
+    for c in _invalid_uri_chars: 
+        if c in uri: return False
+    return True
+
+_lang_tag_regex = compile('^[a-zA-Z]+(?:-[a-zA-Z0-9]+)*$')
+
+def _is_valid_langtag(tag): 
+    return bool(_lang_tag_regex.match(tag))
+    
 
 class Node(object):
     """
@@ -168,6 +188,10 @@ class Identifier(Node, unicode):  # allow Identifiers to be Nodes in the Graph
 class URIRef(Identifier):
     """
     RDF URI Reference: http://www.w3.org/TR/rdf-concepts/#section-Graph-URIref
+
+    The URIRef constructor will do a limited check for valid URIs,
+    essentially just making sure that the string includes no illegal
+    characters (``<, >, ", {, }, |, \\, `, ^``)
     """
 
     __slots__ = ()
@@ -179,8 +203,11 @@ class URIRef(Identifier):
             if ends_in_hash:
                 if not value.endswith("#"):
                     value += "#"
-        # if normalize and value and value != normalize("NFC", value):
-        #    raise Error("value must be in NFC normalized form.")
+
+        if not _is_valid_uri(value): 
+            _LOGGER.warning('%s does not look like a valid URI, trying to serialize this will break.'%value)
+
+
         try:
             rt = unicode.__new__(cls, value)
         except UnicodeDecodeError:
@@ -190,31 +217,14 @@ class URIRef(Identifier):
     def toPython(self):
         return unicode(self)
 
-    def n3(self):
-        return "<%s>" % self
+    def n3(self, namespace_manager = None):
+        if not _is_valid_uri(self): 
+            raise Exception('"%s" does not look like a valid URI, I cannot serialize this as N3/Turtle. Perhaps you wanted to urlencode it?'%self)
 
-    def concrete(self):
-        warnings.warn("URIRef.concrete is deprecated.",
-                      category=DeprecationWarning, stacklevel=2)
-        if "#" in self:
-            return URIRef("/".join(self.rsplit("#", 1)))
-        else:
-            return self
-
-    def abstract(self):
-        warnings.warn("URIRef.abstract is deprecated.",
-                      category=DeprecationWarning, stacklevel=2)
-        if "#" not in self:
-            scheme, netloc, path, params, query, fragment = urlparse(self)
-            if path:
-                return URIRef("#".join(self.rsplit("/", 1)))
-            else:
-                if not self.endswith("#"):
-                    return URIRef("%s#" % self)
-                else:
-                    return self
-        else:
-            return self
+        if namespace_manager: 
+            return namespace_manager.normalizeUri(self)
+        else: 
+            return "<%s>" % self
 
     def defrag(self):
         if "#" in self:
@@ -241,6 +251,15 @@ class URIRef(Identifier):
 
         return """%s(%s)""" % (clsName, super(URIRef, self).__repr__())
 
+    def __add__(self, other):
+        return self.__class__(unicode(self) + other)
+
+    def __radd__(self, other):
+        return self.__class__(other + unicode(self))
+
+    def __mod__(self, other):
+        return self.__class__(unicode(self) % other)
+
     def md5_term_hash(self):
         """a string of hex that will be the same for two URIRefs that
         are the same. It is not a suitable unique id.
@@ -248,9 +267,68 @@ class URIRef(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
+        warnings.warn(
+            "method md5_term_hash is deprecated, and will be removed " +
+            "in the future. If you use this please let rdflib-dev know!",
+            category=DeprecationWarning, stacklevel=2)
         d = md5(self.encode())
         d.update(b("U"))
         return d.hexdigest()
+
+    def de_skolemize(self):
+        """ Create a Blank Node from a skolem URI, in accordance
+        with http://www.w3.org/TR/rdf11-concepts/#section-skolemization.
+        This function accepts only rdflib type skolemization, to provide
+        a round-tripping within the system.
+
+        .. versionadded:: 4.0
+        """
+        if isinstance(self, RDFLibGenid):
+            parsed_uri = urlparse("%s" % self)
+            return BNode(
+                value=parsed_uri.path[len(rdflib_skolem_genid):])
+        elif isinstance(self, Genid):
+            bnode_id = "%s" % self
+            if bnode_id in skolems:
+                return skolems[bnode_id]
+            else:
+                retval = BNode()
+                skolems[bnode_id] = retval
+                return retval
+        else:
+            raise Exception("<%s> is not a skolem URI" % self)
+
+
+class Genid(URIRef):
+    __slots__ = ()
+
+    @staticmethod
+    def _is_external_skolem(uri):
+        if not isinstance(uri, basestring):
+            uri = str(uri)
+        parsed_uri = urlparse(uri)
+        gen_id = parsed_uri.path.rfind(skolem_genid)
+        if gen_id != 0:
+            return False
+        return True
+
+
+class RDFLibGenid(Genid):
+    __slots__ = ()
+
+    @staticmethod
+    def _is_rdflib_skolem(uri):
+        if not isinstance(uri, basestring):
+            uri = str(uri)
+        parsed_uri = urlparse(uri)
+        if parsed_uri.params != "" \
+                or parsed_uri.query != "" \
+                or parsed_uri.fragment != "":
+            return False
+        gen_id = parsed_uri.path.rfind(rdflib_skolem_genid)
+        if gen_id != 0:
+            return False
+        return True
 
 
 def _unique_id():
@@ -266,48 +344,7 @@ def _unique_id():
     return "N"  # ensure that id starts with a letter
 
 
-# Adapted from http://icodesnip.com/snippet/python/
-# simple-universally-unique-id-uuid-or-guid
-def bnode_uuid():
-    """
-    Generates a uuid on behalf of Python 2.4
-    """
-    import os
-    import random
-    import socket
-    from time import time
-    from binascii import hexlify
-
-    pid = [None]
-
-    try:
-        ip = socket.gethostbyname(socket.gethostname())
-        ip = long(ip.replace('.', '999').replace(':', '999'))
-    except:
-        # if we can't get a network address, just imagine one
-        ip = long(random.random() * 100000000000000000L)
-
-    def _generator():
-        if os.getpid() != pid[0]:
-            # Process might have been forked (issue 200), must reseed random:
-            try:
-                preseed = long(hexlify(os.urandom(16)), 16)
-            except NotImplementedError:
-                preseed = 0
-            seed = long(str(preseed) + str(os.getpid())
-                        + str(long(time() * 1000000)) + str(ip))
-            random.seed(seed)
-            pid[0] = os.getpid()
-
-        t = long(time() * 1000.0)
-        r = long(random.random() * 100000000000000000L)
-        data = str(t) + ' ' + str(r) + ' ' + str(ip)
-        return md5(data).hexdigest()
-
-    return _generator
-
-
-def uuid4_ncname():
+def _serial_number_generator():
     """
     Generates UUID4-based but ncname-compliant identifiers.
     """
@@ -317,14 +354,6 @@ def uuid4_ncname():
         return uuid4().hex
 
     return _generator
-
-
-def _serial_number_generator():
-    import sys
-    if sys.version_info[:2] < (2, 5):
-        return bnode_uuid()
-    else:
-        return uuid4_ncname()
 
 
 class BNode(Identifier):
@@ -357,7 +386,7 @@ class BNode(Identifier):
     def toPython(self):
         return unicode(self)
 
-    def n3(self):
+    def n3(self, namespace_manager=None):
         return "_:%s" % self
 
     def __getnewargs__(self):
@@ -384,17 +413,32 @@ class BNode(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
+        warnings.warn(
+            "method md5_term_hash is deprecated, and will be removed " +
+            "in the future. If you use this please let rdflib-dev know!",
+            category=DeprecationWarning, stacklevel=2)
         d = md5(self.encode())
         d.update(b("B"))
         return d.hexdigest()
 
+    def skolemize(self, authority="http://rdlib.net/"):
+        """ Create a URIRef "skolem" representation of the BNode, in accordance
+        with http://www.w3.org/TR/rdf11-concepts/#section-skolemization
+
+        .. versionadded:: 4.0
+        """
+        skolem = "%s%s" % (rdflib_skolem_genid, unicode(self))
+        return URIRef(urljoin(authority, skolem))
+
 
 class Literal(Identifier):
-    doc = """
+    __doc__ = py3compat.format_doctest_out("""
     RDF Literal: http://www.w3.org/TR/rdf-concepts/#section-Graph-Literal
 
     The lexical value of the literal is the unicode object
     The interpreted, datatyped value is available from .value
+
+    Language tags must be valid according to :rfc:5646
 
     For valid XSD datatypes, the lexical form is optionally normalized
     at construction time. Default behaviour is set by rdflib.NORMALIZE_LITERALS
@@ -408,19 +452,23 @@ class Literal(Identifier):
     True
 
     but with data-type they get normalized:
+
     >>> Literal('01', datatype=XSD.integer)!=Literal('1', datatype=XSD.integer)
     False
 
     unless disabled:
+
     >>> Literal('01', datatype=XSD.integer, normalize=False)!=Literal('1', datatype=XSD.integer)
     True
 
 
     Value based comparison is possible:
+
     >>> Literal('01', datatype=XSD.integer).eq(Literal('1', datatype=XSD.float))
     True
 
     The eq method also provides limited support for basic python types:
+
     >>> Literal(1).eq(1) # fine - int compatible with xsd:integer
     True
     >>> Literal('a').eq('b') # fine - str compatible with plain-lit
@@ -430,13 +478,14 @@ class Literal(Identifier):
     >>> Literal('a').eq(1) # not fine, int incompatible with plain-lit
     NotImplemented
 
-
-    Greater-than/less-than ordering comparisons are also done in value space, when compatible datatypes are used.
-    Incompatible datatypes are ordered by DT, or by lang-tag.
-    For other nodes the ordering is None < BNode < URIRef < Literal
+    Greater-than/less-than ordering comparisons are also done in value
+    space, when compatible datatypes are used.  Incompatible datatypes
+    are ordered by DT, or by lang-tag.  For other nodes the ordering
+    is None < BNode < URIRef < Literal
 
     Any comparison with non-rdflib Node are "NotImplemented"
     In PY2.X some stable order will be made up by python
+
     In PY3 this is an error.
 
     >>> from rdflib import Literal, XSD
@@ -460,14 +509,15 @@ class Literal(Identifier):
     >>> Literal(1) > URIRef('foo') # by node-type
     True
 
-    The > < operators will eat this NotImplemented and either make up an ordering (py2.x)
-    or throw a TypeError (py3k)
+    The > < operators will eat this NotImplemented and either make up
+    an ordering (py2.x) or throw a TypeError (py3k):
+
     >>> Literal(1).__gt__(2.0)
     NotImplemented
 
 
-    """
-    __doc__ = py3compat.format_doctest_out(doc)
+    """)
+    
 
     if not py3compat.PY3:
         __slots__ = ("language", "datatype", "value", "_language",
@@ -487,24 +537,28 @@ class Literal(Identifier):
                 "A Literal can only have one of lang or datatype, "
                 "per http://www.w3.org/TR/rdf-concepts/#section-Graph-Literal")
 
+        if lang and not _is_valid_langtag(lang): 
+            raise Exception("'%s' is not a valid language tag!"%lang)
+
         if datatype:
             datatype = URIRef(datatype)
 
         value = None
-        if isinstance(lexical_or_value, Literal):  # create from another Literal instance
-            datatype = datatype or lexical_or_value.datatype
+        if isinstance(lexical_or_value, Literal):  
+            # create from another Literal instance
+
             lang = lang or lexical_or_value.language
-            value = lexical_or_value.value
+            if datatype: 
+                # override datatype
+                value = _castLexicalToPython(lexical_or_value, datatype)
+            else: 
+                datatype = lexical_or_value.datatype
+                value = lexical_or_value.value
 
-        if value == None and isinstance(lexical_or_value, basestring):
-
-            if datatype:
-                convFunc = _toPythonMapping.get(datatype, None)
-                if convFunc:
-                    try:
-                        value = convFunc(lexical_or_value)
-                    except:
-                        pass  # not a valid lexical representation for this dt
+        elif isinstance(lexical_or_value, basestring):
+                # passed a string 
+                # try parsing lexical form of datatyped literal
+                value = _castLexicalToPython(lexical_or_value, datatype) 
 
                 if value is not None and normalize:
                     _value, _datatype = _castPythonToLiteral(value)
@@ -512,13 +566,16 @@ class Literal(Identifier):
                         lexical_or_value = _value
 
         else:
+            # passed some python object 
             value = lexical_or_value
             _value, _datatype = _castPythonToLiteral(lexical_or_value)
+
             datatype = datatype or _datatype
             if _value is not None:
                 lexical_or_value = _value
             if datatype:
                 lang = None
+
 
         if py3compat.PY3 and isinstance(lexical_or_value, bytes):
             lexical_or_value = lexical_or_value.decode('utf-8')
@@ -586,11 +643,14 @@ class Literal(Identifier):
         """
 
         py = self.toPython()
-        if isinstance(py, Literal):
-            s = super(Literal, self).__add__(val)
-            return Literal(s, self.language, self.datatype)
-        else:
-            return Literal(py + val)
+        if not isinstance(py, Literal):
+            try:
+                return Literal(py + val)
+            except TypeError:
+                pass  # fall-through
+
+        s = unicode.__add__(self, val)
+        return Literal(s, self.language, self.datatype)
 
     def __nonzero__(self):
         """
@@ -676,6 +736,7 @@ class Literal(Identifier):
         rdflib.term.Literal(%(u)s'0', datatype=rdflib.term.URIRef(%(u)s'http://www.w3.org/2001/XMLSchema#integer'))
 
         Not working:
+
         >>> ~(Literal("1"))
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
@@ -947,7 +1008,6 @@ class Literal(Identifier):
                         return True
                     raise TypeError(
                         'I cannot know that these two lexical forms do not map to the same value: %s and %s' % (self, other))
-
             if (self.language or "").lower() != (other.language or "").lower():
                 return False
 
@@ -965,9 +1025,15 @@ class Literal(Identifier):
                 else:
                     return False
 
-            # matching non-string DTs
+            # matching non-string DTs now - do we compare values or
+            # lexical form first?  comparing two ints is far quicker -
+            # maybe there are counter examples
 
             if self.value != None and other.value != None:
+
+                if self.datatype in (_RDF_XMLLITERAL, _RDF_HTMLLITERAL):
+                    return _isEqualXMLNode(self.value, other.value)
+
                 return self.value == other.value
             else:
 
@@ -1010,7 +1076,7 @@ class Literal(Identifier):
         return not self.eq(other)
 
     @py3compat.format_doctest_out
-    def n3(self):
+    def n3(self, namespace_manager = None):
         r'''
         Returns a representation in the N3 format.
 
@@ -1040,16 +1106,16 @@ class Literal(Identifier):
             >>> Literal(1).n3()
             %(u)s'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
 
-            >>> Literal(1, lang="en").n3()
-            %(u)s'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
-
             >>> Literal(1.0).n3()
             %(u)s'"1.0"^^<http://www.w3.org/2001/XMLSchema#double>'
 
-        Datatype and language isn't allowed (datatype takes precedence)::
-
             >>> Literal(True).n3()
             %(u)s'"true"^^<http://www.w3.org/2001/XMLSchema#boolean>'
+
+        Datatype and language isn't allowed (datatype takes precedence)::
+
+            >>> Literal(1, lang="en").n3()
+            %(u)s'"1"^^<http://www.w3.org/2001/XMLSchema#integer>'
 
         Custom datatype::
 
@@ -1057,8 +1123,17 @@ class Literal(Identifier):
             >>> Literal("1", datatype=footype).n3()
             %(u)s'"1"^^<http://example.org/ns#foo>'
 
+        Passing a namespace-manager will use it to abbreviate datatype URIs:
+
+            >>> from rdflib import Graph
+            >>> Literal(1).n3(Graph().namespace_manager)
+            %(u)s'"1"^^xsd:integer'
         '''
-        return self._literal_n3()
+        if namespace_manager:
+            return self._literal_n3(qname_callback = 
+                                    namespace_manager.normalizeUri)
+        else:
+            return self._literal_n3()
 
     @py3compat.format_doctest_out
     def _literal_n3(self, use_plain=False, qname_callback=None):
@@ -1202,13 +1277,59 @@ class Literal(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
+        warnings.warn(
+            "method md5_term_hash is deprecated, and will be removed " +
+            "removed in the future. If you use this please let rdflib-dev know!",
+            category=DeprecationWarning, stacklevel=2)
         d = md5(self.encode())
         d.update(b("L"))
         return d.hexdigest()
 
 
+def _parseXML(xmlstring):
+    retval = xml.dom.minidom.parseString(
+        "<rdflibtoplevelelement>%s</rdflibtoplevelelement>" % xmlstring)
+    retval.normalize()
+    return retval
+
+
+def _parseHTML(htmltext):
+    try:
+        import html5lib
+        parser = html5lib.HTMLParser(
+            tree=html5lib.treebuilders.getTreeBuilder("dom"))
+        retval = parser.parseFragment(htmltext)
+        retval.normalize()
+        return retval
+    except ImportError:
+        raise ImportError(
+            "HTML5 parser not available. Try installing" +
+            " html5lib <http://code.google.com/p/html5lib>")
+
+
+def _writeXML(xmlnode):
+    if isinstance(xmlnode, xml.dom.minidom.DocumentFragment):
+        d = xml.dom.minidom.Document()
+        d.childNodes += xmlnode.childNodes
+        xmlnode = d
+    s = xmlnode.toxml('utf-8')
+    # for clean round-tripping, remove headers -- I have great and
+    # specific worries that this will blow up later, but this margin
+    # is too narrow to contain them
+    if s.startswith(b(u'<?xml version="1.0" encoding="utf-8"?>')):
+        s = s[38:]
+    if s.startswith(b('<rdflibtoplevelelement>')):
+        s = s[23:-24]
+    if s == b('<rdflibtoplevelelement/>'):
+        s = b('')
+    return s
+
 # Cannot import Namespace/XSD because of circular dependencies
 _XSD_PFX = 'http://www.w3.org/2001/XMLSchema#'
+_RDF_PFX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+
+_RDF_XMLLITERAL = URIRef(_RDF_PFX + 'XMLLiteral')
+_RDF_HTMLLITERAL = URIRef(_RDF_PFX + 'HTML')
 
 _XSD_STRING = URIRef(_XSD_PFX + 'string')
 
@@ -1293,9 +1414,16 @@ _PythonToXSD = [
     (datetime, (lambda i:i.isoformat(), _XSD_DATETIME)),
     (date, (lambda i:i.isoformat(), _XSD_DATE)),
     (time, (lambda i:i.isoformat(), _XSD_TIME)),
+    (xml.dom.minidom.Document, (_writeXML, _RDF_XMLLITERAL)),
+    # this is a bit dirty - by accident the html5lib parser produces
+    # DocumentFragments, and the xml parser Documents, letting this
+    # decide what datatype to use makes roundtripping easier, but it a
+    # bit random
+    (xml.dom.minidom.DocumentFragment, (_writeXML, _RDF_HTMLLITERAL))
 ]
 
 XSDToPython = {
+    None : None, # plain literals map directly to value space
     URIRef(_XSD_PFX + 'time'): parse_time,
     URIRef(_XSD_PFX + 'date'): parse_date,
     URIRef(_XSD_PFX + 'dateTime'): parse_datetime,
@@ -1323,22 +1451,46 @@ XSDToPython = {
     URIRef(
         _XSD_PFX + 'base64Binary'): lambda s: base64.b64decode(py3compat.b(s)),
     URIRef(_XSD_PFX + 'anyURI'): None,
+    _RDF_XMLLITERAL: _parseXML,
+    _RDF_HTMLLITERAL: _parseHTML
 }
 
 _toPythonMapping = {}
+
 _toPythonMapping.update(XSDToPython)
 
+def _castLexicalToPython(lexical, datatype):
+    """
+    Map a lexical form to the value-space for the given datatype
+    :returns: a python object for the value or ``None``
+    """
+    convFunc = _toPythonMapping.get(datatype, False)
+    if convFunc:
+        try:
+            return convFunc(lexical)
+        except:
+            # not a valid lexical representation for this dt
+            return None
+    elif convFunc is None: 
+        # no conv func means 1-1 lexical<->value-space mapping
+        try: 
+            return unicode(lexical)
+        except UnicodeDecodeError: 
+            return unicode(lexical, 'utf-8')
+    else: 
+        # no convFunc - unknown data-type
+        return None
 
 def bind(datatype, pythontype, constructor=None, lexicalizer=None):
     """
     register a new datatype<->pythontype binding
 
-    Args:
-       constructor : an optional function for converting lexical forms
-                     into a Python instances, if not given the pythontype
-                     is used directly
-       lexicalizer : an optinoal function for converting python objects to
-                     lexical form, if not given object.__str__ is used
+    :param constructor: an optional function for converting lexical forms
+                        into a Python instances, if not given the pythontype
+                        is used directly
+                        
+    :param lexicalizer: an optinoal function for converting python objects to
+                        lexical form, if not given object.__str__ is used
 
     """
     if datatype in _toPythonMapping:
@@ -1353,6 +1505,8 @@ def bind(datatype, pythontype, constructor=None, lexicalizer=None):
 
 class Variable(Identifier):
     """
+    A Variable - this is used for querying, or in Formula aware
+    graphs, where Variables can stored in the graph
     """
     __slots__ = ()
 
@@ -1370,7 +1524,7 @@ class Variable(Identifier):
     def toPython(self):
         return "?%s" % self
 
-    def n3(self):
+    def n3(self, namespace_manager = None):
         return "?%s" % self
 
     def __reduce__(self):
@@ -1383,6 +1537,10 @@ class Variable(Identifier):
         Supported for backwards compatibility; new code should
         probably just use __hash__
         """
+        warnings.warn(
+            "method md5_term_hash is deprecated, and will be removed " +
+            "removed in the future. If you use this please let rdflib-dev know!",
+            category=DeprecationWarning, stacklevel=2)
         d = md5(self.encode())
         d.update(b("V"))
         return d.hexdigest()
@@ -1406,6 +1564,82 @@ class Statement(Node, tuple):
 # Nodes are ordered like this
 # See http://www.w3.org/TR/sparql11-query/#modOrderBy
 _ORDERING = dict(map(reversed, enumerate([BNode, Variable, URIRef, Literal])))
+
+
+def _isEqualXMLNode(node, other):
+    from xml.dom.minidom import Node
+
+    def recurse():
+        # Recursion through the children
+        # In Python2, the semantics of 'map' is such that the check on
+        # length would be unnecessary. In Python 3,
+        # the semantics of map has changed (why, oh why???) and the check
+        # for the length becomes necessary...
+        if len(node.childNodes) != len(other.childNodes):
+            return False
+        for (nc, oc) in map(
+                lambda x, y: (x, y), node.childNodes, other.childNodes):
+            if not _isEqualXMLNode(nc, oc):
+                return False
+        # if we got here then everything is fine:
+        return True
+
+    if node is None or other is None:
+        return False
+
+    if node.nodeType != other.nodeType:
+        return False
+
+    if node.nodeType in [Node.DOCUMENT_NODE, Node.DOCUMENT_FRAGMENT_NODE]:
+        return recurse()
+
+    elif node.nodeType == Node.ELEMENT_NODE:
+        # Get the basics right
+        if not (node.tagName == other.tagName
+                and node.namespaceURI == other.namespaceURI):
+            return False
+
+        # Handle the (namespaced) attributes; the namespace setting key
+        # should be ignored, though
+        # Note that the minidom orders the keys already, so we do not have
+        # to worry about that, which is a bonus...
+        n_keys = [
+            k for k in node.attributes.keysNS()
+            if k[0] != 'http://www.w3.org/2000/xmlns/']
+        o_keys = [
+            k for k in other.attributes.keysNS()
+            if k[0] != 'http://www.w3.org/2000/xmlns/']
+        if len(n_keys) != len(o_keys):
+            return False
+        for k in n_keys:
+            if not (k in o_keys
+                    and node.getAttributeNS(k[0], k[1]) ==
+                    other.getAttributeNS(k[0], k[1])):
+                return False
+
+        # if we got here, the attributes are all right, we can go down
+        # the tree recursively
+        return recurse()
+
+    elif node.nodeType in [
+            Node.TEXT_NODE, Node.COMMENT_NODE, Node.CDATA_SECTION_NODE,
+            Node.NOTATION_NODE]:
+        return node.data == other.data
+
+    elif node.nodeType == Node.PROCESSING_INSTRUCTION_NODE:
+        return node.data == other.data and node.target == other.target
+
+    elif node.nodeType == Node.ENTITY_NODE:
+        return node.nodeValue == other.nodeValue
+
+    elif node.nodeType == Node.DOCUMENT_TYPE_NODE:
+        return node.publicId == other.publicId \
+            and node.systemId == other.system.Id
+
+    else:
+        # should not happen, in fact
+        raise Exception(
+            'I dont know how to compare XML Node type: %s' % node.nodeType)
 
 if __name__ == '__main__':
     import doctest

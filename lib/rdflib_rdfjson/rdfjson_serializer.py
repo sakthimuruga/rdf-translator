@@ -136,7 +136,7 @@ class RdfJsonSerializer(Serializer):
         for subject in self.store.subjects():
             self.subject(subject)
 
-        srlzd = json.dumps(self.jsonObj, indent=2)
+        srlzd = json.dumps(self.jsonObj, indent=2, ensure_ascii=False)
         self.write(srlzd)
         del self.__serialized
 

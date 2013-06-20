@@ -41,6 +41,12 @@ The following namespaces are available by directly importing from rdflib:
 * RDFS
 * OWL
 * XSD
+* FOAF
+* SKOS
+* DOAP
+* DC
+* DCTERMS
+* VOID
 
 .. code-block:: pycon
 
@@ -59,15 +65,37 @@ import os
 from urlparse import urljoin, urldefrag
 from urllib import pathname2url
 
-from rdflib.term import URIRef, Variable, _XSD_PFX
+from rdflib.term import URIRef, Variable, _XSD_PFX, _is_valid_uri
 
 __all__ = [
-    'is_ncname', 'split_uri', 'Namespace', 'NamespaceDict',
+    'is_ncname', 'split_uri', 'Namespace', 
     'ClosedNamespace', 'NamespaceManager',
-    'XMLNS', 'RDF', 'RDFS', 'XSD', 'OWL', 'SKOS']
+    'XMLNS', 'RDF', 'RDFS', 'XSD', 'OWL', 
+    'SKOS', 'DOAP', 'FOAF', 'DC', 'DCTERMS', 'VOID']
 
 
-class Namespace(URIRef):
+class Namespace(unicode):
+
+    __doc__ = format_doctest_out("""
+    Utility class for quickly generating URIRefs with a common prefix
+
+    >>> from rdflib import Namespace
+    >>> n = Namespace("http://example.org/")
+    >>> n.Person # as attribute
+    rdflib.term.URIRef(%(u)s'http://example.org/Person')
+    >>> n['first-name'] # as item - for things that are not valid python identifiers
+    rdflib.term.URIRef(%(u)s'http://example.org/first-name')
+  
+    """)
+    
+    
+    def __new__(cls, value): 
+        try:
+            rt = unicode.__new__(cls, value)
+        except UnicodeDecodeError:
+            rt = unicode.__new__(cls, value, 'utf-8')
+        return rt
+
 
     @property
     def title(self):
@@ -86,45 +114,46 @@ class Namespace(URIRef):
         else:
             return self.term(name)
 
+    def __repr__(self): 
+        return "Namespace(%s)"%unicode.__repr__(self)
 
-class NamespaceDict(dict):
 
-    def __new__(cls, uri=None, context=None):
-        inst = dict.__new__(cls)
-        inst.uri = uri  # TODO: do we need to set these
-                        # both here and in __init__ ??
-        inst.__context = context
-        return inst
+class URIPattern(unicode):
 
-    def __init__(self, uri, context=None):
-        self.uri = uri
-        self.__context = context
+    __doc__ = format_doctest_out("""
+    Utility class for creating URIs according to some pattern
+    This supports either new style formatting with .format
+    or old-style with %% operator
 
-    def term(self, name):
-        uri = self.get(name)
-        if uri is None:
-            uri = URIRef(self.uri + name)
-            if self.__context and (uri, None, None) not in self.__context:
-                _logger.warning("%s not defined" % uri)
-            self[name] = uri
-        return uri
+    >>> u=URIPattern("http://example.org/%%s/%%d/resource")
+    >>> u%%('books', 12345)
+    rdflib.term.URIRef(%(u)s'http://example.org/books/12345/resource')
 
-    def __getattr__(self, name):
-        return self.term(name)
+    """)
 
-    def __getitem__(self, key, default=None):
-        return self.term(key) or default
+    def __new__(cls, value): 
+        try:
+            rt = unicode.__new__(cls, value)
+        except UnicodeDecodeError:
+            rt = unicode.__new__(cls, value, 'utf-8')
+        return rt
 
-    def __str__(self):
-        return self.uri
+    def __mod__(self, *args, **kwargs):
+        return URIRef(unicode(self).__mod__(*args, **kwargs))
 
-    def __repr__(self):
-        return """rdflib.namespace.NamespaceDict('%s')""" % str(self.uri)
+    def format(self, *args, **kwargs): 
+        return URIRef(unicode.format(self, *args, **kwargs))
+
+    def __repr__(self): 
+        return "URIPattern(%r)"%unicode.__repr__(self)
+    
 
 
 class ClosedNamespace(object):
     """
+    A namespace with a closed list of members
 
+    Trying to create terms not listen is an error
     """
 
     def __init__(self, uri, terms):
@@ -158,6 +187,9 @@ class ClosedNamespace(object):
 
 
 class _RDFNamespace(ClosedNamespace):
+    """
+    Closed namespace for RDF terms
+    """
     def __init__(self):
         super(_RDFNamespace, self).__init__(
             URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
@@ -168,7 +200,7 @@ class _RDFNamespace(ClosedNamespace):
 
                 # RDF Classes
                 "Seq", "Bag", "Alt", "Statement", "Property",
-                "XMLLiteral", "HTML", "LangString", "List", "PlainLiteral",
+                "List", "PlainLiteral",
 
                 # RDF Properties
                 "subject", "predicate", "object", "type",
@@ -176,7 +208,10 @@ class _RDFNamespace(ClosedNamespace):
                 # and _n where n is a non-negative integer
 
                 # RDF Resources
-                "nil"]
+                "nil",
+
+                # Added in RDF 1.1
+                "XMLLiteral", "HTML", "langString"]
         )
 
     def term(self, name):
@@ -203,10 +238,16 @@ XSD = Namespace(_XSD_PFX)
 SKOS = Namespace('http://www.w3.org/2004/02/skos/core#')
 DOAP = Namespace('http://usefulinc.com/ns/doap#')
 FOAF = Namespace('http://xmlns.com/foaf/0.1/')
+DC = Namespace('http://purl.org/dc/elements/1.1/')
+DCTERMS = Namespace('http://purl.org/dc/terms/')
+VOID = Namespace('http://rdfs.org/ns/void#')
+
 
 
 class NamespaceManager(object):
     """
+
+    Class for managing prefix => namespace mappings
 
     Sample usage from FuXi ...
 
@@ -239,8 +280,9 @@ class NamespaceManager(object):
         self.__cache = {}
         self.__log = None
         self.bind("xml", u"http://www.w3.org/XML/1998/namespace")
-        self.bind("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-        self.bind("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
+        self.bind("rdf", RDF)
+        self.bind("rdfs", RDFS)
+        self.bind("xsd", XSD)
 
     def reset(self):
         self.__cache = {}
@@ -264,7 +306,7 @@ class NamespaceManager(object):
         """
         try:
             namespace, name = split_uri(rdfTerm)
-            namespace = URIRef(namespace)
+            namespace = URIRef(unicode(namespace))
         except:
             if isinstance(rdfTerm, Variable):
                 return "?%s" % rdfTerm
@@ -280,6 +322,11 @@ class NamespaceManager(object):
             return ':'.join([qNameParts[0], qNameParts[-1]])
 
     def compute_qname(self, uri, generate=True):
+
+        if not _is_valid_uri(uri): 
+            raise Exception('"%s" does not look like a valid URI, I cannot serialize this. Perhaps you wanted to urlencode it?'%uri)
+
+
         if not uri in self.__cache:
             namespace, name = split_uri(uri)
             namespace = URIRef(namespace)
@@ -299,7 +346,7 @@ class NamespaceManager(object):
         return self.__cache[uri]
 
     def bind(self, prefix, namespace, override=True):
-        namespace = URIRef(namespace)
+        namespace = URIRef(unicode(namespace))
         # When documenting explain that override only applies in what cases
         if prefix is None:
             prefix = ''

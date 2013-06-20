@@ -317,8 +317,8 @@ class MicrodataConversion(Microdata) :
 		item_list = []
 		for top_level_item in self.get_top_level_items() :
 			item_list.append( self.generate_triples(top_level_item, Evaluation_Context()) )
-		list = generate_RDF_collection( self.graph, item_list )
-		self.graph.add( (URIRef(self.base),self.ns_md["item"],list) )
+		#list = generate_RDF_collection( self.graph, item_list )
+		#self.graph.add( (URIRef(self.base),self.ns_md["item"],list) )
 		
 		# If the vocab expansion is also switched on, this is the time to do it.
 

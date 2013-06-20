@@ -21,7 +21,7 @@ License: W3C Software License
 http://www.w3.org/Consortium/Legal/copyright-software
 
 Modified by Sean B. Palmer
-Copyright 2007, Sean B. Palmer. \u32E1
+Copyright 2007, Sean B. Palmer. 
 
 Modified to work with rdflib by Gunnar Aastrand Grimnes
 Copyright 2010, Gunnar A. Grimnes
@@ -312,7 +312,8 @@ number_syntax = re.compile(
     r'?(?P<exponent>(?:e|E)[-+]?[0-9]+)?')
 digitstring = re.compile(r'[0-9]+')              # Unsigned integer
 interesting = re.compile(r'[\\\r\n\"]')
-langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*')
+#langcode = re.compile(r'[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*')
+langcode = re.compile(r'[a-zA-Z]+(-[a-zA-Z0-9]+){0,2}')
 
 
 class SinkParser:
@@ -1714,6 +1715,12 @@ def hexify(ustr):
 
 class TurtleParser(Parser):
 
+    """
+    An RDFLib parser for Turtle
+    
+    See http://www.w3.org/TR/turtle/ 
+    """
+
     def __init__(self):
         pass
 
@@ -1737,6 +1744,13 @@ class TurtleParser(Parser):
 
 
 class N3Parser(TurtleParser):
+
+    """
+    An RDFLib parser for Notation3 
+
+    See http://www.w3.org/DesignIssues/Notation3.html
+
+    """
 
     def __init__(self):
         pass
@@ -1786,4 +1800,4 @@ def main():
 if __name__ == '__main__':
     main()
 
-#ends
+# ends

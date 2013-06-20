@@ -30,8 +30,8 @@ A tiny example:
 __docformat__ = "restructuredtext en"
 
 # The format of the __version__ line is matched by a regex in setup.py
-__version__ = "3.4.1-dev"
-__date__ = "2013/03/01"
+__version__ = "4.0.1"
+__date__ = "2013/05/22"
 
 __all__ = [
     'URIRef',
@@ -41,6 +41,7 @@ __all__ = [
 
     'Namespace',
 
+    'Dataset',
     'Graph',
     'ConjunctiveGraph',
 
@@ -58,8 +59,10 @@ del sys
 
 import logging
 _LOGGER = logging.getLogger("rdflib")
-_LOGGER.info("version: %s" % __version__)
+_LOGGER.info("RDFLib Version: %s" % __version__)
 
+
+NORMALIZE_LITERALS = True
 """
 If True - Literals lexical forms are normalized when created.
 I.e. the lexical forms is parsed according to data-type, then the
@@ -68,7 +71,7 @@ stored lexical form is the re-serialized value that was parsed.
 Illegal values for a datatype are simply kept.  The normalized keyword
 for Literal.__new__ can override this.
 
-For example: 
+For example:
 
 >>> from rdflib import Literal,XSD
 >>> Literal("01", datatype=XSD.int)
@@ -79,14 +82,15 @@ created after that time, previously created literals will remain
 (un)normalized.
 
 """
-NORMALIZE_LITERALS=True
 
+
+DAWG_LITERAL_COLLATION = False
 """
 DAWG_LITERAL_COLLATION determines how literals are ordered or compared
 to each other.
 
 In SPARQL, applying the >,<,>=,<= operators to literals of
-incompatible data-types is an error, i.e: 
+incompatible data-types is an error, i.e:
 
 Literal(2)>Literal('cake') is neither true nor false, but an error.
 
@@ -100,13 +104,13 @@ datatype URI
 In particular, this determines how the rich comparison operators for
 Literal work, eq, __neq__, __lt__, etc.
 """
-DAWG_LITERAL_COLLATION=False
 
-from rdflib.term import URIRef, BNode, Literal, Variable
+from rdflib.term import (
+    URIRef, BNode, Literal, Variable)
 
 from rdflib.namespace import Namespace
 
-from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib.graph import Dataset, Graph, ConjunctiveGraph
 
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 
@@ -117,3 +121,4 @@ assert plugin
 assert query
 
 from rdflib import util
+

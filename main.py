@@ -4,7 +4,7 @@ main.py
 
 This file is part of RDF Translator.
 
-Copyright 2011, 2012 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
+Copyright 2011-2013 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
 
 RDF Translator is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -39,10 +39,10 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 __author__ = "Alex Stolz"
-__copyright__ = "Copyright 2011-2012, Universitaet der Bundeswehr Munich"
+__copyright__ = "Copyright 2011-2013, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
@@ -135,23 +135,29 @@ class TranslatorHandler(webapp2.RequestHandler):
                 source = create_input_source(location=self.page, format=self.source_format)
                 self.source_format = source.content_type
                 
+            if self.source_format == "text/html":
+                self.source_format = "rdfa" # microdata is fallback
+                
         try:
             self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Translation failed</p>"
             if self.content:
                 self.response_string = translator.convert(self.content, do_pygmentize=self.do_pygmentize, file_format="string", source_format=self.source_format, target_format=self.target_format)
-                if self.response_string.strip() == "" and self.source_format == "text/html": # fix microdata test
+                if self.response_string.strip() == "" and self.source_format == "rdfa": # fix microdata test
                     self.response_string = translator.convert(self.content, do_pygmentize=self.do_pygmentize, file_format="string", source_format="microdata", target_format=self.target_format)
             elif self.page:
                 self.response_string = translator.convert(self.page, do_pygmentize=self.do_pygmentize, file_format="file", source_format=self.source_format, target_format=self.target_format)
-                if self.response_string.strip() == "" and self.source_format == "text/html": # fix microdata test
+                if self.response_string.strip() == "" and self.source_format == "rdfa": # fix microdata test
                     self.response_string = translator.convert(self.page, do_pygmentize=self.do_pygmentize, file_format="file", source_format="microdata", target_format=self.target_format)
             if self.response_string.strip() == "":
                 raise Exception("empty result returned")
         except Exception, e:
             if debug:
                 tb = traceback.format_exc()
-                e = tb
-            self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>Error Message:<br>%s</p>" % (self.source_format, self.target_format, str(e))
+                e = "<pre style=\"color: red\">"+tb+"</pre>"
+            error_message = "No error message available"
+            if str(e).strip() != "":
+                error_message = "Error message:<br>%s" % str(e)
+            self.response_string = "<p style='color: red; font-weight: bold; padding-top: 12px'>Could not convert from %s to %s for provided resource...<br><br>%s</p>" % (self.source_format, self.target_format, error_message)
             
         #self.response.headers['Content-Length'] = str(len(self.response_string)) # disabled for security reasons by GAE, http://code.google.com/appengine/docs/python/tools/webapp/responseclass.html#Disallowed_HTTP_Response_Headers
         self.response.headers.add_header("Access-Control-Allow-Origin", "*") # enable CORS
@@ -259,3 +265,8 @@ application = webapp2.WSGIApplication([
 ##	from rdflib.RDFS	import RDFSNS as ns_rdfs
 ##	from rdflib.RDF		import RDFNS  as ns_rdf
 ##	from rdflib.Graph import Graph # added by AS
+
+# pyRDFa/initialcontext.py:
+## comment out initial_context.ns
+# pyMicrodata/__init__.py:
+## comment out _bindings
