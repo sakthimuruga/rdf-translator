@@ -11,6 +11,7 @@ want to do so through the Graph class parse method.
 """
 
 import os
+import sys
 from urllib import pathname2url, url2pathname
 from urllib2 import urlopen, Request
 from urlparse import urljoin
@@ -65,8 +66,9 @@ class StringInputSource(InputSource):
 
 
 headers = {
-    'User-agent':
-    'rdflib-%s (http://rdflib.net/; eikeon@eikeon.com)' % __version__
+    'User-Agent':
+    'Python RDF Translator (http://rdf-translator.appspot.com/)',
+    'Cache-Control': 'max-age=10'
 }
 
 
@@ -85,18 +87,8 @@ class URLInputSource(InputSource):
             myheaders['Accept'] = 'application/rdf+xml, */*;q=0.1'
         elif format == 'n3':
             myheaders['Accept'] = 'text/n3, */*;q=0.1'
-        elif format == 'turtle':
-            myheaders['Accept'] = 'text/turtle, */*;q=0.1'
-        elif format == 'nquads':
-            myheaders['Accept'] = 'text/x-nquads, */*;q=0.1'
         elif format == 'nt':
             myheaders['Accept'] = 'text/plain, */*;q=0.1'
-        elif format == 'trix':
-            myheaders['Accept'] = 'application/xml, */*;q=0.1'
-        elif format == 'rdf-json' or format == 'rdf-json-pretty':
-            myheaders['Accept'] = 'application/json, */*;q=0.1'
-        elif format == 'json-ld':
-            myheaders['Accept'] = 'application/ld+json, */*;q=0.1'
         else:
             myheaders['Accept'] = (
                 'application/rdf+xml,text/rdf+n3;q=0.9,' +
@@ -117,13 +109,10 @@ class URLInputSource(InputSource):
 
 
 class FileInputSource(InputSource):
-    """
-    TODO:
-    """
 
     def __init__(self, file):
         base = urljoin("file:", pathname2url(os.getcwd()))
-        system_id = URIRef(file.name, base=base)
+        system_id = URIRef(urljoin("file:", pathname2url(file.name)), base=base)
         super(FileInputSource, self).__init__(system_id)
         self.file = file
         self.setByteStream(file)
@@ -155,7 +144,9 @@ def create_input_source(source=None, publicID=None,
                 f = source
                 input_source = InputSource()
                 input_source.setByteStream(f)
-                if hasattr(f, "name"):
+                if f is sys.stdin:
+                    input_source.setSystemId("file:///dev/stdin")
+                elif hasattr(f, "name"):
                     input_source.setSystemId(f.name)
             else:
                 raise Exception("Unexpected type '%s' for source '%s'" %

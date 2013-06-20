@@ -303,8 +303,9 @@ objects::
 
 """)
 
-from rdflib.term import BNode, URIRef
+from rdflib.term import Node, BNode, URIRef
 from rdflib.namespace import RDF
+from rdflib.paths import Path
 
 __all__ = ['Resource']
 
@@ -424,6 +425,10 @@ class Resource(object):
         for s1, s2 in pairs:
             yield self._cast(s1), self._cast(s2)
 
+    def _resource_triples(self, triples):
+        for s,p,o in triples:
+            yield self._cast(s), self._cast(p), self._cast(o)
+
     def _resources(self, nodes):
         for node in nodes:
             yield self._cast(node)
@@ -433,6 +438,42 @@ class Resource(object):
             return self._new(node)
         else:
             return node
+
+    def __iter__(self): 
+        return self._resource_triples(self._graph.triples((self.identifier, None, None)))    
+
+    def __getitem__(self, item):
+        """
+        Resources can be sliced like graphs, but the subject is fixed. 
+        
+        r[RDFS.label] returns triples for (self.identifier, RDFS.label, None)
+        r[RDFS.label : Literal("Bob")] for (self.identifier, RDFS.label, "Bob")
+        etc. 
+
+        """
+
+        if isinstance(item, slice): 
+            if item.step: 
+                raise TypeError("Resources fix the subject for slicing, and can only be sliced by predicate/object. ")
+            p,o=item.start,item.stop
+            if p is None and o is None: 
+                return self.predicate_objects()
+            elif p is None:
+                return self.predicates(o)
+            elif o is None:
+                return self.objects(p)
+            else: 
+                return self.identifier,p,o in self._graph
+
+        elif isinstance(item, (Node, Path)):
+
+            return self.objects(item)
+            
+        else: 
+            raise TypeError("You can only index a resource by a single rdflib term, a slice of rdflib terms, not %s (%s)"%(item, type(item)))
+
+    def __setitem__(self, item, value): 
+        self.set(item, value)
 
     def _new(self, subject):
         return type(self)(self._graph, subject)

@@ -4,7 +4,7 @@ translator.py
 
 This file is part of RDF Translator.
 
-Copyright 2011, 2012 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
+Copyright 2011-2013 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
 
 RDF Translator is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -22,7 +22,6 @@ along with RDF Translator.  If not, see <http://www.gnu.org/licenses/>.
 
 This module converts between various syntaxes of RDF.
 
-def createSnippet(inputrdf, format): contacts external server for converting to RDFa or Microdata
 def getPrefixDict(url): fetches unknown prefixes from prefix.cc on-line service
 def pygmentize(text, format): returns respective HTML code of source code to highlight
 def convert(f, do_pygmentize, file_format, source_format, target_format): converts input data (file or content)
@@ -35,25 +34,14 @@ import re
 import logging
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import guess_lexer, get_lexer_for_mimetype, XmlLexer, JavascriptLexer
+from pygments.lexers import guess_lexer, get_lexer_for_mimetype, XmlLexer, JsonLexer, HtmlLexer
 from notation3_lexer import Notation3Lexer
 import urllib
 from google.appengine.api import urlfetch
 
 import rdflib
-from pyRdfa import pyRdfa
-from pyMicrodata import pyMicrodata
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
-
-"""
-rdflib.plugin.register("rdf-json", Parser, "rdfextras.parsers.rdfjson", "RdfJsonParser")
-rdflib.plugin.register("rdf-json", Serializer, "rdfextras.serializers.rdfjson", "RdfJsonSerializer")
-rdflib.plugin.register("rdf-json-pretty", Serializer, "rdfextras.serializers.rdfjson", "PrettyRdfJsonSerializer")
-
-rdflib.plugin.register("json-ld", Parser, "rdfextras.parsers.jsonld", "JsonLDParser")
-rdflib.plugin.register("json-ld", Serializer, "rdfextras.serializers.jsonld", "JsonLDSerializer")
-"""
 
 rdflib.plugin.register("rdf-json", Parser, "rdflib_rdfjson.rdfjson_parser", "RdfJsonParser")
 rdflib.plugin.register("rdf-json", Serializer, "rdflib_rdfjson.rdfjson_serializer", "RdfJsonSerializer")
@@ -85,7 +73,7 @@ known_vocabs = {
     "coo": "http://purl.org/coo/ns#",
     "vvo": "http://purl.org/vvo/ns#",
     "fab": "http://purl.org/fab/ns#",
-    "xro": "http://www.stalsoft.com/ontologies/xro/ns#",
+    "xro": "http://purl.org/xro/ns#",
     "xhv": "http://www.w3.org/1999/xhtml/vocab#",
     "s": "http://schema.org/",
     "grddl": "http://www.w3.org/2003/g/data-view#",
@@ -105,70 +93,35 @@ known_vocabs = {
     "og": "http://ogp.me/ns#",
     "rev": "http://purl.org/stuff/rev#",
     "sioc": "http://rdfs.org/sioc/ns#",
-    "v": "http://rdf.data-vocabulary.org/#"
+    "v": "http://rdf.data-vocabulary.org/#",
+    "dv": "http://data-vocabulary.org/"
 }
-
-
-def createSnippet(inputrdf, format="rdfa"):
-    """Connects with external server for converting to RDFa and Microdata."""
-    # test connection
-    HOST1 = False
-    result = urlfetch.fetch(url="http://rhizomik.net:80/", allow_truncated=True, deadline=10)
-    if result.status_code == 200:
-        HOST1 = True
-    
-    # prepare form fields and headers
-    form_fields = {
-        "rdf": inputrdf,
-        "mode": "snippet"
-    }
-    form_data = urllib.urlencode(form_fields)
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "text/plain"
-    }
-    
-    response = None
-    if HOST1:
-        response = urlfetch.fetch(url="http://rhizomik.net:80/redefer-services/rdf2%s" % format,
-            payload=form_data,
-            method=urlfetch.POST,
-            headers=headers,
-            allow_truncated=True,
-            deadline=10)
-    else:
-        response = urlfetch.fetch(url="http://rhizomik-redefer.appspot.com:80/rdf2%s" % format,
-            payload=form_data,
-            method=urlfetch.POST,
-            headers=headers,
-            allow_truncated=True,
-            deadline=10)
-            
-    if response and response.status_code == 200:
-        return response.content
-    return ""
 
 def getPrefixDict(url):
     """Fetches unknown prefixes from prefix.cc on-line service."""
-    global known_vocabs
-    # add if not in dict of known vocabularies
-    if not url in known_vocabs.values():
-        #logging.info(url)
-        params = {"uri": url, "format": "json"}
-        result = urlfetch.fetch(url="http://prefix.cc/reverse?%s" % urllib.urlencode(params), deadline=10)
-        if result.status_code == 200:
-            #logging.info(result.content)
-            return json.loads(result.content).items()
+    #logging.info(url)
+    params = {"uri": url, "format": "json"}
+    result = urlfetch.fetch(url="http://prefix.cc/reverse?%s" % urllib.urlencode(params), deadline=10)
+    if result.status_code == 200:
+        #logging.info(result.content)
+        json_object = []
+        try:
+            json_object = json.loads(result.content).items()
+        except Exception, e:
+            logging.warning(str(e))
+        return json_object
     return []
 
 def pygmentize(text, format):
     """Returns respective HTML snippet of a source code aimed to be highlighted."""
     if format == "n3" or format == "turtle" or format == "nt" or format == "nquads":
         lexer = Notation3Lexer()
+    elif format == "rdfa" or format == "microdata":
+        lexer = HtmlLexer()
     elif format == "pretty-xml" or format == "xml" or format == "trix":
         lexer = XmlLexer()
     elif format == "rdf-json" or format == "rdf-json-pretty" or format == "json-ld":
-        lexer = JavascriptLexer()
+        lexer = JsonLexer()
     else:
         lexer = guess_lexer(text)
     return highlight(text, lexer, HtmlFormatter())
@@ -176,111 +129,62 @@ def pygmentize(text, format):
 def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", target_format="pretty-xml"):
     """Converts input data (file or content) from a given source format to a given target format."""
     global known_vocabs
-    
-    final_format = None
     base = None
+    prefixes = {}
+    g = rdflib.Graph()
     
     if target_format == "rdfa" or target_format == "microdata":
-        final_format = target_format
-        #target_format = "pretty-xml" # not necessary for local rdfa/microdata serialization
         base = "http://rdf-translator.appspot.com/"
-    
-    g = rdflib.Graph()
-
-    if not target_format == "trix": # trix should not display all these namespace definitions
-        for key, value in dict.items(known_vocabs):
-            g.bind(key, value)
-    
-    if file_format == "string":
-        import StringIO
-        if source_format == "rdfa":
-            g = pyRdfa().graph_from_source(StringIO.StringIO(f))
-        elif source_format == "microdata":
-            g = pyMicrodata().graph_from_source(StringIO.StringIO(f))
-        else:
+        
+    if target_format == "n3" or target_format == "turtle" or target_format == "pretty-xml" or target_format == "xml":
+        
+        if file_format == "string":
             g.parse(data=f, format=source_format, publicID=base)
-    else:
-        if source_format == "rdfa":
-            g = pyRdfa().graph_from_source(f)
-        elif source_format == "microdata":
-            g = pyMicrodata().graph_from_source(f)
         else:
             g.parse(f, format=source_format, publicID=base)
-        # NOTE: has no effect with current RDFLib version, because it shows full URIs for subjects and objects
-        #d = dict()
-        #for s in g.subjects(None, None):
-        #    base = None
-        #    split_hash = s.rsplit("#")
-        #    split_slash = s.rsplit("/")
-        #    if len(split_hash) > 1:
-        #        base = split_hash[0]
-        #    elif len(split_slash) > 1:
-        #        base = split_slash[0]
-        #    if base in d:
-        #        d[base] += 1
-        #    else:
-        #        d[base] = 0
-                
-        #ns_sorted = sorted(d.items(), key=lambda x: x[1], reverse=True)
-    
-    if len(g) > 0:
+            
         serialization = g.serialize(format=target_format).decode("UTF-8")
         
-        if target_format == "n3" or target_format == "turtle" or target_format == "pretty-xml" or target_format == "xml":
-            d = {}
-            # for n3, try to resolve missing prefixes with prefix.cc
-            if target_format == "n3" or target_format == "turtle":
-                from StringIO import StringIO
-                n3_file = StringIO(serialization)
-                for line in n3_file.readlines():
-                    if line.lower().find("@prefix") >= 0:
-                        lt = line.find("<")
-                        gt = line.find(">")
-                        if 0 < lt < gt:
-                            url = line[(lt+1):gt].strip()
-                            d = dict(d.items() + getPrefixDict(url))
-                                    
-            # for pretty-xml the same
-            elif target_format == "pretty-xml" or target_format == "xml":
-                for m in re.finditer(r"xmlns:[a-zA-Z0-9]+=\"?([^\"]*)", serialization):
-                    #logging.info(m.group(1))
-                    url = m.group(1)
-                    d = dict(d.items() + getPrefixDict(url))
-            
-            # do only if not already in dict of known vocabularies
-            if len(d) > 0:
-                g = rdflib.Graph()
-            
-                for key, value in dict(known_vocabs.items() + d.items()).items():
-                    g.bind(key, value)
-            
-                if file_format == "string":
-                    import StringIO
-                    if source_format == "rdfa":
-                        g = pyRdfa().graph_from_source(StringIO.StringIO(f))
-                    elif source_format == "microdata":
-                        g = pyMicrodata().graph_from_source(StringIO.StringIO(f))
-                    else:
-                        g.parse(data=f, format=source_format, publicID=base)
-                else:
-                    # NOTE: has no effect with current RDFLib version
-                    #it = iter(xrange(len(ns_sorted)))
-                    #for item in ns_sorted:
-                    #    g.bind("ns%d"%it.next(), item)
-                    if source_format == "rdfa":
-                        g = pyRdfa().graph_from_source(f)
-                    elif source_format == "microdata":
-                        g = pyMicrodata().graph_from_source(f)
-                    else:
-                        g.parse(f, format=source_format, publicID=base)
-                            
-                serialization = g.serialize(format=target_format).decode("UTF-8")           
+        # for n3, try to resolve missing prefixes with prefix.cc
+        if target_format == "n3" or target_format == "turtle":
+            from StringIO import StringIO
+            n3_file = StringIO(serialization)
+            for line in n3_file.readlines():
+                if line.lower().find("@prefix") >= 0:
+                    lt = line.find("<")
+                    gt = line.find(">")
+                    if 0 < lt < gt:
+                        url = line[(lt+1):gt].strip()
+                        if url in known_vocabs.values(): # try known vocabs first
+                            prefixes[known_vocabs.keys()[known_vocabs.values().index(url)]] = url
+                        else: # fallback using prefix.cc
+                            prefixes = dict(prefixes.items() + getPrefixDict(url)) # add prefix to dict
+
+        # for pretty-xml do the same
+        elif target_format == "pretty-xml" or target_format == "xml":
+            for m in re.finditer(r"xmlns:[a-zA-Z0-9]+=\"?([^\"]*)", serialization):
+                #logging.info(m.group(1))
+                url = m.group(1)
+                if url in known_vocabs.values(): # try known vocabs first
+                    prefixes[known_vocabs.keys()[known_vocabs.values().index(url)]] = url
+                else: # fallback using prefix.cc
+                    prefixes = dict(prefixes.items() + getPrefixDict(url)) # add prefix to dict
+
+    else:
+        prefixes = known_vocabs
+    
+    g = rdflib.Graph()
         
-        # final format is rdfa or microdata, made detour over rdf/xml
-        # not necessary for local rdfa/microdata serialization
-        #if final_format == "microdata" or final_format == "rdfa":
-        #    rdf = g.serialize(format=target_format).decode("UTF-8")
-        #    serialization = createSnippet(rdf, final_format).decode("UTF-8")     
+    for key, value in dict.items(prefixes):
+        g.bind(key, value, override=True)
+    
+    if file_format == "string":
+        g.parse(data=f, format=source_format, publicID=base)
+    else:
+        g.parse(f, format=source_format, publicID=base)
+    
+    if len(g) > 0:    
+        serialization = g.serialize(format=target_format).decode("UTF-8")
         
         if do_pygmentize:
             return pygmentize(serialization, target_format)

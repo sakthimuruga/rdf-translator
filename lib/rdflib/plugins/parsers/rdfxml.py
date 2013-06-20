@@ -1,36 +1,7 @@
-# Copyright (c) 2002, Daniel Krech, http://eikeon.com/
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-#
-#   * Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#
-#   * Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following
-# disclaimer in the documentation and/or other materials provided
-# with the distribution.
-#
-#   * Neither the name of Daniel Krech nor the names of its
-# contributors may be used to endorse or promote products derived
-# from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+An RDF/XML parser for RDFLib
+"""
 
-"""
-"""
 from xml.sax import make_parser
 from xml.sax.handler import ErrorHandler
 from xml.sax.saxutils import handler, quoteattr, escape
@@ -148,7 +119,7 @@ class RDFXMLHandler(handler.ContentHandler):
     def startPrefixMapping(self, prefix, namespace):
         self._ns_contexts.append(self._current_context.copy())
         self._current_context[namespace] = prefix
-        self.store.bind(prefix, URIRef(namespace), override=False)
+        self.store.bind(prefix, namespace or "", override=False)
 
     def endPrefixMapping(self, prefix):
         self._current_context = self._ns_contexts[-1]
@@ -251,7 +222,7 @@ class RDFXMLHandler(handler.ContentHandler):
             if att.startswith(XMLNS) or att[0:3].lower() == "xml":
                 pass
             elif att in UNQUALIFIED:
-                #if not RDFNS[att] in atts:
+                # if not RDFNS[att] in atts:
                 atts[RDFNS[att]] = v
             else:
                 atts[URIRef(att)] = v
@@ -265,7 +236,7 @@ class RDFXMLHandler(handler.ContentHandler):
             next.end = self.node_element_end
         else:
             self.node_element_start(name, qname, attrs)
-            #self.current.end = self.node_element_end
+            # self.current.end = self.node_element_end
             # TODO... set end to something that sets start such that
             # another element will cause error
 
@@ -421,13 +392,13 @@ class RDFXMLHandler(handler.ContentHandler):
                 elif parse_type == "Collection":
                     current.char = None
                     object = current.list = RDF.nil  # BNode()
-                                                     #self.parent.subject
+                                                     # self.parent.subject
                     next.start = self.node_element_start
                     next.end = self.list_node_element_end
                 else:  # if parse_type=="Literal":
                      # All other values are treated as Literal
                      # See: http://www.w3.org/TR/rdf-syntax-grammar/
-                                #parseTypeOtherPropertyElt
+                                # parseTypeOtherPropertyElt
                     object = Literal("", datatype=RDF.XMLLiteral)
                     current.char = self.literal_element_char
                     current.declared = {XMLNS: 'xml'}
@@ -505,7 +476,7 @@ class RDFXMLHandler(handler.ContentHandler):
         if self.parent.list == RDF.nil:
             list = BNode()
             # Removed between 20030123 and 20030905
-            #self.store.add((list, RDF.type, LIST))
+            # self.store.add((list, RDF.type, LIST))
             self.parent.list = list
             self.store.add((self.parent.list, RDF.first, current.subject))
             self.parent.object = list
@@ -513,7 +484,7 @@ class RDFXMLHandler(handler.ContentHandler):
         else:
             list = BNode()
             # Removed between 20030123 and 20030905
-            #self.store.add((list, RDF.type, LIST))
+            # self.store.add((list, RDF.type, LIST))
             self.store.add((self.parent.list, RDF.rest, list))
             self.store.add((list, RDF.first, current.subject))
             self.parent.list = list

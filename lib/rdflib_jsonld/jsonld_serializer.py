@@ -17,7 +17,7 @@ Example usage::
 
     >>> g = Graph().parse(data=testrdf, format='n3')
 
-    >>> print(g.serialize(format='json-ld', indent=4))
+    >>> print(g.serialize(format='json-ld', indent=4, generate_compact=True))
     {
         "@context": {
             "dc": "http://purl.org/dc/terms/",
@@ -66,7 +66,7 @@ class JsonLDSerializer(Serializer):
                           "Given encoding was: %s" % encoding)
 
         context_data = kwargs.get('context')
-        generate_compact = kwargs.get('compact', True)
+        generate_compact = kwargs.get('compact', False)
         indent = kwargs.get('indent', 2)
         separators = (',', ': ')
         sort_keys = True
@@ -78,7 +78,7 @@ class JsonLDSerializer(Serializer):
         stream.write(data.encode(encoding, 'replace'))
 
 
-def to_tree(graph, context_data=None, base=None, generate_compact=True):
+def to_tree(graph, context_data=None, base=None, generate_compact=False):
     """
     @@ TODO: add docstring describing args and returned value type
     """
@@ -199,14 +199,14 @@ def _to_raw_value(state, o):
         v = o
         if o.language and o.language != context.lang:
             return {context.lang_key: o.language,
-                    context.literal_key: v}
+                    context.value_key: v}
         elif o.datatype:
              #https://github.com/RDFLib/rdflib-jsonld/issues/4
              #serialize data type regardless
              #if o.datatype in PLAIN_LITERAL_TYPES:
              #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
-                    context.literal_key: v}
+                    context.value_key: v}
         else:
             return v
 

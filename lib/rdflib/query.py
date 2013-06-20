@@ -3,6 +3,8 @@ import os
 import shutil
 import tempfile
 import warnings
+import types
+
 from urlparse import urlparse
 try:
     from io import BytesIO
@@ -10,22 +12,23 @@ try:
 except:
     from StringIO import StringIO as BytesIO
 
+from . import py3compat
 
 __all__ = ['Processor', 'Result', 'ResultParser', 'ResultSerializer',
            'ResultException']
 
 
-"""
-Query plugin interface.
-
-This module is useful for those wanting to write a query processor
-that can plugin to rdf. If you are wanting to execute a query you
-likely want to do so through the Graph class query method.
-
-"""
 
 
 class Processor(object):
+    """
+    Query plugin interface.
+    
+    This module is useful for those wanting to write a query processor
+    that can plugin to rdf. If you are wanting to execute a query you
+    likely want to do so through the Graph class query method.
+    
+    """
 
     def __init__(self, graph):
         pass
@@ -33,6 +36,23 @@ class Processor(object):
     def query(self, strOrQuery, initBindings={}, initNs={}, DEBUG=False):
         pass
 
+class UpdateProcessor(object):
+    """
+    Update plugin interface.
+    
+    This module is useful for those wanting to write an update
+    processor that can plugin to rdflib. If you are wanting to execute
+    an update statement you likely want to do so through the Graph
+    class update method.
+
+    .. versionadded:: 4.0
+    
+    """
+ 
+    def __init__(self, graph): 
+        pass
+    def update(self, strOrQuery, initBindings={}, initNs={}):
+        pass
 
 class ResultException(Exception):
     pass
@@ -59,16 +79,86 @@ class EncodeOnlyUnicode(object):
         return getattr(self.__stream, name)
 
 
+class ResultRow(tuple):
+    """
+    a single result row
+    allows accessing bindings as attributes or with []
+
+    >>> from rdflib import URIRef, Variable
+    >>> rr=ResultRow({ Variable('a'): URIRef('urn:cake') }, [Variable('a')])
+
+    >>> rr[0]
+    rdflib.term.URIRef(%(u)s'urn:cake')
+    >>> rr[1]
+    Traceback (most recent call last):
+        ...
+    IndexError: tuple index out of range
+
+    >>> rr.a
+    rdflib.term.URIRef(%(u)s'urn:cake')
+    >>> rr.b
+    Traceback (most recent call last):
+        ...
+    AttributeError: b
+
+    >>> rr['a']
+    rdflib.term.URIRef(%(u)s'urn:cake')
+    >>> rr['b']
+    Traceback (most recent call last):
+        ...
+    KeyError: 'b'
+
+    >>> rr[Variable('a')]
+    rdflib.term.URIRef(%(u)s'urn:cake')
+
+    .. versionadded:: 4.0
+
+    """
+    __doc__ = py3compat.format_doctest_out(__doc__)
+
+    def __new__(cls, values, labels):
+
+        instance = super(ResultRow, cls).__new__(
+            cls, (values.get(v) for v in labels))
+        instance.labels = dict((unicode(x[1]), x[0])
+                               for x in enumerate(labels))
+        return instance
+
+    def __getattr__(self, name):
+        if name not in self.labels:
+            raise AttributeError(name)
+        return tuple.__getitem__(self, self.labels[name])
+
+    def __getitem__(self, name):
+        try:
+            return tuple.__getitem__(self, name)
+        except TypeError:
+            if name in self.labels:
+                return tuple.__getitem__(self, self.labels[name])
+            if unicode(name) in self.labels:  # passing in variable object
+                return tuple.__getitem__(self, self.labels[unicode(name)])
+            raise KeyError(name)
+
+    def asdict(self):
+        return dict((v, self[v]) for v in self.labels if self[v] != None)
+
+
 class Result(object):
     """
     A common class for representing query result.
-    This is backwards compatible with the old SPARQLResult objects
-    Like before there is a bit of magic that makes this appear like Python
-    objects, depending on the type of result.
+    
+    There is a bit of magic here that makes this appear like different
+    Python objects, depending on the type of result.
 
-    If the type is "SELECT", this is like a list of list of values
-    If the type is "ASK" this is like a list of a single bool
-    If the type is "CONSTRUCT" or "DESCRIBE" this is like a graph
+    If the type is "SELECT", iterating will yield lists of QueryRow objects
+    
+    If the type is "ASK", iterating will yield a single bool (or
+    bool(result) will return the same bool)
+
+    If the type is "CONSTRUCT" or "DESCRIBE" iterating will yield the
+    triples. 
+
+    len(result) also works.
 
     """
     def __init__(self, type_):
@@ -78,9 +168,27 @@ class Result(object):
 
         self.type = type_
         self.vars = None
-        self.bindings = None
+        self._bindings = None
+        self._genbindings = None
         self.askAnswer = None
         self.graph = None
+
+    def _get_bindings(self):
+        if self._genbindings:
+            self._bindings += list(self._genbindings)
+            self._genbindings = None
+
+        return self._bindings
+
+    def _set_bindings(self, b):
+        if isinstance(b, types.GeneratorType):
+            self._genbindings = b
+            self._bindings = []
+        else:
+            self._bindings = b
+
+    bindings = property(
+        _get_bindings, _set_bindings, doc="a list of variable bindings as dicts")
 
     @staticmethod
     def parse(source, format='xml', **kwargs):
@@ -131,6 +239,12 @@ class Result(object):
         else:
             return len(self.graph)
 
+    def __nonzero__(self): 
+        if self.type == 'ASK': 
+            return self.askAnswer
+        else: 
+            return len(self)>0
+
     def __iter__(self):
         if self.type in ("CONSTRUCT", "DESCRIBE"):
             for t in self.graph:
@@ -138,10 +252,16 @@ class Result(object):
         elif self.type == 'ASK':
             yield self.askAnswer
         elif self.type == 'SELECT':
-            # To remain compatible with the old SPARQLResult behaviour
-            # this iterates over lists of variable bindings
-            for b in self.bindings:
-                yield tuple(b.get(v) for v in self.vars)
+            # this iterates over ResultRows of variable bindings
+
+            if self._genbindings:
+                for b in self._genbindings:
+                    self._bindings.append(b)
+                    yield ResultRow(b, self.vars)
+                self._genbindings = None
+            else:
+                for b in self._bindings:
+                    yield ResultRow(b, self.vars)
 
     def __getattr__(self, name):
         if self.type in ("CONSTRUCT", "DESCRIBE") and self.graph is not None:
@@ -178,7 +298,7 @@ class ResultParser(object):
     def __init__(self):
         pass
 
-    def parse(self, source):
+    def parse(self, source, **kwargs):
         """return a Result object"""
         pass  # abstract
 
@@ -188,6 +308,6 @@ class ResultSerializer(object):
     def __init__(self, result):
         self.result = result
 
-    def serialize(self, stream, encoding="utf-8"):
+    def serialize(self, stream, encoding="utf-8", **kwargs):
         """return a string properly serialized"""
         pass  # abstract
