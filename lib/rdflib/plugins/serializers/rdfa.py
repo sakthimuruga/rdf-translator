@@ -101,6 +101,7 @@ class RdfaSerializer(Serializer):
         store.predicates()).union(store.objects(None, RDF.type))).union([o.datatype for o in store.objects() if isinstance(o, Literal) and o.datatype])
               
         namespaces["rdf"] = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        namespaces["rdfs"] = "http://www.w3.org/2000/01/rdf-schema#"
         for predicate in possible:
             prefix, namespace, local = nm.compute_qname(predicate)
             namespaces[prefix] = namespace
