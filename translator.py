@@ -52,7 +52,7 @@ rdflib.plugin.register("json-ld", Serializer, "rdflib_jsonld.jsonld_serializer",
 
 import socket
 socket.setdefaulttimeout(10)
-urlfetch.set_default_fetch_deadline(60)
+urlfetch.set_default_fetch_deadline(55)
 
 try:
   import json
