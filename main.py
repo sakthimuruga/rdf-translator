@@ -102,6 +102,7 @@ class TranslatorHandler(webapp2.RequestHandler):
     
     def processRequest(self):
         """Interpret a request, relay to further processing and prepare response headers."""
+        global debug
         if "rdf-translator-dev" in self.request.url:
             debug = True
         
