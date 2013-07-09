@@ -42,7 +42,7 @@ __author__ = "Alex Stolz"
 __copyright__ = "Copyright 2011-2013, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
-__version__ = "1.3.0"
+__version__ = "1.3.2"
 __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
@@ -102,6 +102,9 @@ class TranslatorHandler(webapp2.RequestHandler):
     
     def processRequest(self):
         """Interpret a request, relay to further processing and prepare response headers."""
+        if "rdf-translator-dev" in self.request.url:
+            debug = True
+        
         if self.html == True:
             self.do_pygmentize = True
             self.response.headers['Content-Type'] = "text/html"
