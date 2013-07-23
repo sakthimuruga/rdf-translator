@@ -42,7 +42,7 @@ __author__ = "Alex Stolz"
 __copyright__ = "Copyright 2011-2013, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
@@ -205,6 +205,7 @@ class TranslatorHandler(webapp2.RequestHandler):
     
     def get(self, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         """Handle HTTP GET requests."""
+        logging.info("uri compontents = %s %s %s %s %s" % (arg1, arg2, arg3, arg4, arg5))
         self.do_pygmentize = False
         self.prepareArgs(arg1, arg2, arg3, arg4, arg5)
         self.processRequest()
