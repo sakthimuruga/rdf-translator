@@ -4,7 +4,7 @@ translator.py
 
 This file is part of RDF Translator.
 
-Copyright 2011-2013 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
+Copyright 2011-2014 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
 
 RDF Translator is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by

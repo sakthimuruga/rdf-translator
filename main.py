@@ -4,7 +4,7 @@ main.py
 
 This file is part of RDF Translator.
 
-Copyright 2011-2013 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
+Copyright 2011-2014 Alex Stolz. E-Business and Web Science Research Group, Universitaet der Bundeswehr Munich.
 
 RDF Translator is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -39,10 +39,10 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 __author__ = "Alex Stolz"
-__copyright__ = "Copyright 2011-2013, Universitaet der Bundeswehr Munich"
+__copyright__ = "Copyright 2011-2014, Universitaet der Bundeswehr Munich"
 __credits__ = ["Martin Hepp", "Andreas Radinger"]
 __license__ = "LGPL"
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 __maintainer__ = "Alex Stolz"
 __email__ = "alex.stolz@ebusiness-unibw.org"
 __status__ = "Deployment"
@@ -155,6 +155,7 @@ class TranslatorHandler(webapp2.RequestHandler):
             if self.response_string.strip() == "":
                 raise Exception("empty result returned")
         except Exception, e:
+            self.response.set_status(500)
             if debug:
                 tb = traceback.format_exc()
                 e = "<pre style=\"color: red\">"+tb+"</pre>"
