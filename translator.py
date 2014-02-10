@@ -76,7 +76,7 @@ known_vocabs = {
     "fab": "http://purl.org/fab/ns#",
     "xro": "http://purl.org/xro/ns#",
     "xhv": "http://www.w3.org/1999/xhtml/vocab#",
-    "s": "http://schema.org/",
+    "schema": "http://schema.org/",
     "grddl": "http://www.w3.org/2003/g/data-view#",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfa": "http://www.w3.org/ns/rdfa#",
