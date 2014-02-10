@@ -14,7 +14,7 @@
   Location: Neubiberg, Germany
 
 /* SITE */
-  Last update: December 23, 2013
+  Last update: February 10, 2014
   Language: English
   Doctype: HTML5, CSS3, JS
   IDE: TextMate, GAE, Gimp
