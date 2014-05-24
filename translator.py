@@ -47,8 +47,8 @@ rdflib.plugin.register("rdf-json", Parser, "rdflib_rdfjson.rdfjson_parser", "Rdf
 rdflib.plugin.register("rdf-json", Serializer, "rdflib_rdfjson.rdfjson_serializer", "RdfJsonSerializer")
 rdflib.plugin.register("rdf-json-pretty", Serializer, "rdflib_rdfjson.rdfjson_serializer", "PrettyRdfJsonSerializer")
 
-rdflib.plugin.register("json-ld", Parser, "rdflib_jsonld.jsonld_parser", "JsonLDParser")
-rdflib.plugin.register("json-ld", Serializer, "rdflib_jsonld.jsonld_serializer", "JsonLDSerializer")
+rdflib.plugin.register("json-ld", Parser, "rdflib_jsonld.parser", "JsonLDParser")
+rdflib.plugin.register("json-ld", Serializer, "rdflib_jsonld.serializer", "JsonLDSerializer")
 
 import socket
 socket.setdefaulttimeout(10)
