@@ -159,6 +159,8 @@ class TranslatorHandler(webapp2.RequestHandler):
             if debug:
                 tb = traceback.format_exc()
                 e = "<pre style=\"color: red\">"+tb+"</pre>"
+            else:
+                e = "<pre style=\"color: red\">"+str(e)+"</pre>"
             error_message = "No error message available"
             if str(e).strip() != "":
                 error_message = "Error message:<br>%s" % str(e)
