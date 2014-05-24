@@ -133,7 +133,10 @@ function submit() {
 				    $("#progressbar").css({"display":"none"});
 				}
 				else {
-				    $("#progressbar").html("<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response: Either the entered URI does not exist or the service is temporarily unavailable. Please try again later or contact the developers by filling in the Feedback form.</p>");
+					$("#serialization").html(req.responseText);
+				    $("#serialization").slideDown("slow");
+					$("#progressbar").css({"display":"none"});
+				    //$("#progressbar").html("<p style='color: red; font-weight: bold; padding-top: 12px; width: 910px; margin: 0 auto'>No response: Either the entered URI does not exist or the service is temporarily unavailable. Please try again later or contact the developers by filling in the Feedback form.</p>");
 				}
 			}
 		}
