@@ -12,6 +12,7 @@ http://www.w3.org/TR/microdata-rdf/
 License: W3C Software License,
 http://www.w3.org/Consortium/Legal/copyright-software
 Author: Ivan Herman
+Copyright: W3C
 
 """
 
@@ -74,7 +75,12 @@ class RDFaParser(Parser):
               media_type="",
               rdfa_version=None,
               embedded_rdf=False,
-              vocab_expansion=False, vocab_cache=False):
+              space_preserve=True,
+              vocab_expansion=False, 
+              vocab_cache=False,
+              refresh_vocab_cache=False,
+              vocab_cache_report=False,
+              check_lite=False):
         """
         @param source: one of the input sources that the RDFLib package defined
         @type source: InputSource class instance
@@ -100,6 +106,9 @@ class RDFaParser(Parser):
         the output graph. Some languages (e.g., SVG) require this, and the
         flag is ignored.
         @type embedded_rdf: Boolean
+        @keyword space_preserve: by default, space in the HTML source must be preserved in the generated literal;
+        this behavior can be switched off
+        @type space_preserve: Boolean
         @keyword vocab_expansion: whether the RDFa @vocab attribute should
         also mean vocabulary expansion (see the RDFa 1.1 spec for further
         details)
@@ -109,6 +118,13 @@ class RDFaParser(Parser):
         requires the ability for the local application to write on the
         local file system
         @type vocab_chache: Boolean
+        @keyword vocab_cache_report: whether the details of vocabulary file caching process should be reported 
+        in the processor graph as information (mainly useful for debug)
+        @type vocab_cache_report: Boolean
+        @keyword refresh_vocab_cache: whether the caching checks of vocabs should be by-passed, ie, if caches should be re-generated regardless of the stored date (important for vocab development)
+        @type refresh_vocab_cache: Boolean
+        @keyword check_lite: generate extra warnings in case the input source is not RDFa 1.1 check_lite
+        @type check_lite: Boolean
         """
 
         if html5lib is False:
@@ -121,20 +137,35 @@ class RDFaParser(Parser):
                       media_type=media_type,
                       rdfa_version=rdfa_version,
                       embedded_rdf=embedded_rdf,
-                      vocab_expansion=vocab_expansion, vocab_cache=vocab_cache)
+                      space_preserve=space_preserve,
+                      vocab_expansion=vocab_expansion, 
+                      vocab_cache=vocab_cache,
+                      vocab_cache_report=vocab_cache_report,
+                      refresh_vocab_cache=refresh_vocab_cache,
+                      check_lite=check_lite
+                      )
 
     def _process(self, graph, pgraph, baseURI, orig_source,
                  media_type="",
                  rdfa_version=None,
                  embedded_rdf=False,
-                 vocab_expansion=False, vocab_cache=False):
+                 space_preserve=True,
+                 vocab_expansion=False, 
+                 vocab_cache=False,
+                 vocab_cache_report=False,
+                 refresh_vocab_cache=False,
+                 check_lite=False):
         from .pyRdfa import pyRdfa, Options
         from rdflib import Graph
         processor_graph = pgraph if pgraph is not None else Graph()
         self.options = Options(output_processor_graph=True,
                                embedded_rdf=embedded_rdf,
+                               space_preserve=space_preserve,
                                vocab_expansion=vocab_expansion,
-                               vocab_cache=vocab_cache)
+                               vocab_cache=vocab_cache,
+                               vocab_cache_report=vocab_cache_report,
+                               refresh_vocab_cache=refresh_vocab_cache,
+                               check_lite=check_lite)
 
         if media_type is None:
             media_type = ""
@@ -142,8 +173,7 @@ class RDFaParser(Parser):
                            base=baseURI,
                            media_type=media_type,
                            rdfa_version=rdfa_version)
-        processor.graph_from_source(
-            orig_source, graph=graph, pgraph=processor_graph, rdfOutput=False)
+        processor.graph_from_source(orig_source, graph=graph, pgraph=processor_graph, rdfOutput=False)
         # This may result in an exception if the graph parsing led to an error
         _check_error(processor_graph)
 
@@ -232,7 +262,9 @@ class StructuredDataParser(Parser):
               pgraph=None,
               rdfa_version="",
               vocab_expansion=False,
-              vocab_cache=False):
+              vocab_cache=False,
+              media_type='text/html'
+              ):
         """
         @param source: one of the input sources that the RDFLib package defined
         @type source: InputSource class instance
@@ -260,7 +292,10 @@ class StructuredDataParser(Parser):
         as triples, to the processor graph, or whether they should be raised.
         @type rdfOutput: Boolean
         """
+        # Note that the media_type argument is ignored, and is here only to avoid an 'unexpected argument' error. 
+        # This parser works for text/html only anyway...
         (baseURI, orig_source) = _get_orig_source(source)
+        if rdfa_version == "" : rdfa_version = "1.1"
         RDFaParser()._process(graph, pgraph, baseURI, orig_source,
                               media_type='text/html',
                               rdfa_version=rdfa_version,
@@ -270,5 +305,4 @@ class StructuredDataParser(Parser):
                                    vocab_expansion=vocab_expansion,
                                    vocab_cache=vocab_cache)
         from .hturtle import HTurtleParser
-        HTurtleParser(
-        )._process(graph, baseURI, orig_source, media_type='text/html')
+        HTurtleParser()._process(graph, baseURI, orig_source, media_type='text/html')

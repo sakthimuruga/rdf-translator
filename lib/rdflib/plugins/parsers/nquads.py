@@ -5,7 +5,7 @@ graphs that can be used and queried. The store that backs the graph
 
 >>> from rdflib import ConjunctiveGraph, URIRef, Namespace
 >>> g = ConjunctiveGraph()
->>> data = open("test/nquads/example.nquads", "rb")
+>>> data = open("test/nquads.rdflib/example.nquads", "rb")
 >>> g.parse(data, format="nquads") # doctest:+ELLIPSIS
 <Graph identifier=... (<class 'rdflib.graph.Graph'>)>
 >>> assert len(g.store) == 449
@@ -22,6 +22,8 @@ graphs that can be used and queried. The store that backs the graph
 >>> FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 >>> assert(g.value(s, FOAF.name).eq("Arco Publications"))
 """
+
+from codecs import getreader
 
 from rdflib.py3compat import b
 
@@ -50,6 +52,8 @@ class NQuadsParser(NTriplesParser):
         if not hasattr(source, 'read'):
             raise ParseError("Item to parse must be a file-like object.")
 
+        source = getreader('utf-8')(source)
+
         self.file = source
         self.buffer = ''
         while True:
@@ -65,19 +69,19 @@ class NQuadsParser(NTriplesParser):
 
     def parseline(self):
         self.eat(r_wspace)
-        if (not self.line) or self.line.startswith(b('#')):
+        if (not self.line) or self.line.startswith(('#')):
             return  # The line is empty or a comment
 
         subject = self.subject()
-        self.eat(r_wspaces)
+        self.eat(r_wspace)
 
         predicate = self.predicate()
-        self.eat(r_wspaces)
+        self.eat(r_wspace)
 
         obj = self.object()
-        self.eat(r_wspaces)
+        self.eat(r_wspace)
 
-        context = self.uriref()
+        context = self.uriref() or self.nodeid()
         self.eat(r_tail)
 
         if self.line:

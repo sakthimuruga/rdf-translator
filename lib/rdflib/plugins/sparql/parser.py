@@ -17,7 +17,7 @@ from pyparsing import CaselessKeyword as Keyword  # watch out :)
 from parserutils import Comp, Param, ParamList
 
 from . import operators as op
-from rdflib.py3compat import decodeStringEscape
+from rdflib.py3compat import decodeUnicodeEscape, bytestype
 
 import rdflib
 
@@ -177,22 +177,37 @@ PNAME_NS = Optional(
 
 # [173] PN_LOCAL_ESC ::= '\' ( '_' | '~' | '.' | '-' | '!' | '$' | '&' | "'" | '(' | ')' | '*' | '+' | ',' | ';' | '=' | '/' | '?' | '#' | '@' | '%' )
 
-PN_LOCAL_ESC = Regex('\\\\[_~\\.\\-!$&"\'()*+,;=/?#@%]')
-PN_LOCAL_ESC.setParseAction(lambda x: x[0][1:])
+PN_LOCAL_ESC_re = '\\\\[_~\\.\\-!$&"\'()*+,;=/?#@%]'
+#PN_LOCAL_ESC = Regex(PN_LOCAL_ESC_re) # regex'd
+#PN_LOCAL_ESC.setParseAction(lambda x: x[0][1:])
 
 # [172] HEX ::= [0-9] | [A-F] | [a-f]
 # HEX = Regex('[0-9A-Fa-f]') # not needed
 
 # [171] PERCENT ::= '%' HEX HEX
-PERCENT = Regex('%[0-9a-fA-F]{2}')
-PERCENT.setParseAction(lambda x: unichr(int(x[0][1:], 16)))
+PERCENT_re = '%[0-9a-fA-F]{2}'
+#PERCENT = Regex(PERCENT_re) # regex'd
+#PERCENT.setParseAction(lambda x: unichr(int(x[0][1:], 16)))
 
 # [170] PLX ::= PERCENT | PN_LOCAL_ESC
-PLX = PERCENT | PN_LOCAL_ESC
+PLX_re = '(%s|%s)'%(PN_LOCAL_ESC_re,PERCENT_re)
+#PLX = PERCENT | PN_LOCAL_ESC # regex'd
+
 
 # [169] PN_LOCAL ::= (PN_CHARS_U | ':' | [0-9] | PLX ) ((PN_CHARS | '.' | ':' | PLX)* (PN_CHARS | ':' | PLX) )?
-PN_LOCAL = Combine((Regex(u'[%s0-9:]' % PN_CHARS_U_re, flags=re.U) | PLX) + ZeroOrMore((Regex(
-    u'[%s\\.:]' % PN_CHARS_re, flags=re.U) | PLX) + Optional(Regex(u'[%s:]' % PN_CHARS_re, flags=re.U) | PLX)))
+
+PN_LOCAL = Regex(ur"""([%(PN_CHARS_U)s:0-9]|%(PLX)s)
+                     (([%(PN_CHARS)s\.:]|%(PLX)s)*
+                      ([%(PN_CHARS)s:]|%(PLX)s) )?"""%dict(PN_CHARS_U=PN_CHARS_U_re,
+                                                       PN_CHARS=PN_CHARS_re,
+                                                         PLX=PLX_re), flags=re.X|re.UNICODE)
+
+def _hexExpand(match):
+    return unichr(int(match.group(0)[1:], 16))
+
+PN_LOCAL.setParseAction(lambda x: re.sub("(%s)"%PERCENT_re, _hexExpand, x[0]))
+
+
 
 
 # [141] PNAME_LN ::= PNAME_NS PN_LOCAL
@@ -272,14 +287,14 @@ DOUBLE_NEGATIVE.setParseAction(lambda x: neg(x[0]))
 # ) + ZeroOrMore( ~ Literal("'\\") | ECHAR ) ) + "'''"
 STRING_LITERAL_LONG1 = Regex(ur"'''((?:'|'')?(?:[^'\\]|\\['ntbrf\\]))*'''")
 STRING_LITERAL_LONG1.setParseAction(
-    lambda x: rdflib.Literal(decodeStringEscape(x[0][3:-3])))
+    lambda x: rdflib.Literal(decodeUnicodeEscape(x[0][3:-3])))
 
 # [159] STRING_LITERAL_LONG2 ::= '"""' ( ( '"' | '""' )? ( [^"\] | ECHAR ) )* '"""'
 # STRING_LITERAL_LONG2 = Literal('"""') + ( Optional( Literal('"') | '""'
 # ) + ZeroOrMore( ~ Literal('"\\') | ECHAR ) ) +  '"""'
 STRING_LITERAL_LONG2 = Regex(ur'"""(?:(?:"|"")?(?:[^"\\]|\\["ntbrf\\]))*"""')
 STRING_LITERAL_LONG2.setParseAction(
-    lambda x: rdflib.Literal(decodeStringEscape(x[0][3:-3])))
+    lambda x: rdflib.Literal(decodeUnicodeEscape(x[0][3:-3])))
 
 # [156] STRING_LITERAL1 ::= "'" ( ([^#x27#x5C#xA#xD]) | ECHAR )* "'"
 # STRING_LITERAL1 = Literal("'") + ZeroOrMore(
@@ -288,7 +303,7 @@ STRING_LITERAL_LONG2.setParseAction(
 STRING_LITERAL1 = Regex(
     ur"'(?:[^'\n\r\\]|\\['ntbrf\\])*'(?!')", flags=re.U)
 STRING_LITERAL1.setParseAction(
-    lambda x: rdflib.Literal(decodeStringEscape(x[0][1:-1])))
+    lambda x: rdflib.Literal(decodeUnicodeEscape(x[0][1:-1])))
 
 # [157] STRING_LITERAL2 ::= '"' ( ([^#x22#x5C#xA#xD]) | ECHAR )* '"'
 # STRING_LITERAL2 = Literal('"') + ZeroOrMore (
@@ -297,7 +312,7 @@ STRING_LITERAL1.setParseAction(
 STRING_LITERAL2 = Regex(
     ur'"(?:[^"\n\r\\]|\\["ntbrf\\])*"(?!")', flags=re.U)
 STRING_LITERAL2.setParseAction(
-    lambda x: rdflib.Literal(decodeStringEscape(x[0][1:-1])))
+    lambda x: rdflib.Literal(decodeUnicodeEscape(x[0][1:-1])))
 
 # [161] NIL ::= '(' WS* ')'
 NIL = Literal('(') + ')'
@@ -954,7 +969,7 @@ SolutionModifier = Optional(Param('groupby', GroupClause)) + Optional(Param('hav
 
 
 # [9] SelectClause ::= 'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( ( Var | ( '(' Expression 'AS' Var ')' ) )+ | '*' )
-SelectClause = Keyword('SELECT') + Optional(Param('modifier', Keyword('DISTINCT') | Keyword('REDUCED'))) + (OneOrMore(ParamList('projection', Comp('vars',  
+SelectClause = Keyword('SELECT') + Optional(Param('modifier', Keyword('DISTINCT') | Keyword('REDUCED'))) + (OneOrMore(ParamList('projection', Comp('vars',
     Param('var', Var) | (Literal('(') + Param('expr', Expression) + Keyword('AS') + Param('evar', Var) + ')')))) | '*')
 
 # [17] WhereClause ::= 'WHERE'? GroupGraphPattern
@@ -1030,6 +1045,9 @@ def expandUnicodeEscapes(q):
 def parseQuery(q):
     if hasattr(q, 'read'):
         q = q.read()
+    if isinstance(q, bytestype):
+        q = q.decode('utf-8')
+
     q = expandUnicodeEscapes(q)
     return Query.parseString(q, parseAll=True)
 
@@ -1037,6 +1055,10 @@ def parseQuery(q):
 def parseUpdate(q):
     if hasattr(q, 'read'):
         q = q.read()
+
+    if isinstance(q, bytestype):
+        q = q.decode('utf-8')
+
     q = expandUnicodeEscapes(q)
     return UpdateUnit.parseString(q, parseAll=True)[0]
 

@@ -15,10 +15,10 @@ A tiny example:
     >>> import rdflib
 
     >>> g = rdflib.Graph()
-    >>> result = g.parse("http://www.w3.org/2000/10/swap/test/meet/white.rdf")
+    >>> result = g.parse("http://www.w3.org/2000/10/swap/test/meet/blue.rdf")
 
     >>> print("graph has %s statements." % len(g))
-    graph has 19 statements.
+    graph has 9 statements.
     >>>
     >>> for s, p, o in g:
     ...     if (s, p, o) not in g:
@@ -30,8 +30,8 @@ A tiny example:
 __docformat__ = "restructuredtext en"
 
 # The format of the __version__ line is matched by a regex in setup.py
-__version__ = "4.0.1"
-__date__ = "2013/05/22"
+__version__ = "4.2-dev"
+__date__ = "2013/12/31"
 
 __all__ = [
     'URIRef',
@@ -58,8 +58,12 @@ assert sys.version_info >= (2, 5, 0), "rdflib requires Python 2.5 or higher"
 del sys
 
 import logging
-_LOGGER = logging.getLogger("rdflib")
-_LOGGER.info("RDFLib Version: %s" % __version__)
+#import __main__
+#if not hasattr(__main__, '__file__'):
+    # show log messages in interactive mode
+#    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info("RDFLib Version: %s" % __version__)
 
 
 NORMALIZE_LITERALS = True
@@ -121,4 +125,3 @@ assert plugin
 assert query
 
 from rdflib import util
-

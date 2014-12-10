@@ -22,7 +22,7 @@ def create_matrix():
         "xml",
         "n3",
         "nt",
-        "rdf-json",
+        #"rdf-json",
         "json-ld",
         ]
         
@@ -33,8 +33,8 @@ def create_matrix():
         "xml",
         "n3",
         "nt",
-        "rdf-json-pretty",
-        "rdf-json",
+        #"rdf-json-pretty",
+        #"rdf-json",
         "json-ld",
         #"trix",
         ]

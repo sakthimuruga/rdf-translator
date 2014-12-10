@@ -147,6 +147,7 @@ The user of the package may refer add these transformers to L{Options} instance.
 @author: U{Ivan Herman<a href="http://www.w3.org/People/Ivan/">}
 @license: This software is available for use under the
 U{W3C® SOFTWARE NOTICE AND LICENSE<href="http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231">}
+@copyright: W3C
 
 @var builtInTransformers: List of built-in transformers that are to be run regardless, because they are part of the RDFa spec
 @var CACHE_DIR_VAR: Environment variable used to define cache directories for RDFa vocabularies in case the default setting does not work or is not appropriate. 
@@ -155,7 +156,7 @@ U{W3C® SOFTWARE NOTICE AND LICENSE<href="http://www.w3.org/Consortium/Legal/200
 """
 
 """
- $Id: __init__.py,v 1.90 2013-02-05 13:03:27 ivan Exp $
+ $Id: __init__.py,v 1.91 2013-10-16 11:48:54 ivan Exp $
 """
 
 __version__ = "3.4.3"
@@ -191,6 +192,9 @@ else :
 	from rdflib.RDFS  import RDFSNS as ns_rdfs
 	from rdflib.RDF	  import RDFNS  as ns_rdf
 	from rdflib.Graph import Graph
+
+import logging
+logger = logging.getLogger(__name__)
 
 # Namespace, in the RDFLib sense, for the rdfa vocabulary
 ns_rdfa		= Namespace("http://www.w3.org/ns/rdfa#")
@@ -444,7 +448,7 @@ class pyRdfa :
 								self.charset = 'utf-8'
 								break
 						self.options.set_host_language(self.media_type)
-					return file(name)
+					return open(name, 'rb')
 			else :
 				return name
 		except HTTPError :
@@ -489,6 +493,7 @@ class pyRdfa :
 		state = ExecutionContext(topElement, default_graph, base=self.required_base if self.required_base != None else "", options=self.options, rdfa_version=self.rdfa_version)
 
 		# Perform the built-in and external transformations on the HTML tree. 
+		logger.info(self.options)
 		for trans in self.options.transformers + builtInTransformers :
 			trans(topElement, self.options, state)
 		
@@ -679,7 +684,7 @@ class pyRdfa :
 		except :
 			graph = Graph()
 
-		graph.bind("xsd", Namespace('http://www.w3.org/2001/XMLSchema#'))
+		# graph.bind("xsd", Namespace('http://www.w3.org/2001/XMLSchema#'))
 		# the value of rdfOutput determines the reaction on exceptions...
 		for name in names :
 			self.graph_from_source(name, graph, rdfOutput)

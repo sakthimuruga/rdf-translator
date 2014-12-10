@@ -36,17 +36,18 @@ __all__ = [
 ]
 
 import logging
+logger = logging.getLogger(__name__)
 import warnings
-
-_LOGGER = logging.getLogger(__name__)
 
 import base64
 import xml.dom.minidom
 
 from urlparse import urlparse, urljoin, urldefrag
 from datetime import date, time, datetime
-from isodate import parse_time, parse_date, parse_datetime
 from re import sub, compile
+from collections import defaultdict
+
+from isodate import parse_time, parse_date, parse_datetime
 
 
 try:
@@ -72,15 +73,15 @@ skolems = {}
 _invalid_uri_chars = '<>" {}|\\^`'
 
 def _is_valid_uri(uri):
-    for c in _invalid_uri_chars: 
+    for c in _invalid_uri_chars:
         if c in uri: return False
     return True
 
 _lang_tag_regex = compile('^[a-zA-Z]+(?:-[a-zA-Z0-9]+)*$')
 
-def _is_valid_langtag(tag): 
+def _is_valid_langtag(tag):
     return bool(_lang_tag_regex.match(tag))
-    
+
 
 class Node(object):
     """
@@ -146,7 +147,7 @@ class Identifier(Node, unicode):  # allow Identifiers to be Nodes in the Graph
         This tries to implement this:
         http://www.w3.org/TR/sparql11-query/#modOrderBy
 
-        Variables are no included in the SPARQL list, but
+        Variables are not included in the SPARQL list, but
         they are greater than BNodes and smaller than everything else
 
         """
@@ -188,10 +189,6 @@ class Identifier(Node, unicode):  # allow Identifiers to be Nodes in the Graph
 class URIRef(Identifier):
     """
     RDF URI Reference: http://www.w3.org/TR/rdf-concepts/#section-Graph-URIref
-
-    The URIRef constructor will do a limited check for valid URIs,
-    essentially just making sure that the string includes no illegal
-    characters (``<, >, ", {, }, |, \\, `, ^``)
     """
 
     __slots__ = ()
@@ -204,8 +201,8 @@ class URIRef(Identifier):
                 if not value.endswith("#"):
                     value += "#"
 
-        if not _is_valid_uri(value): 
-            _LOGGER.warning('%s does not look like a valid URI, trying to serialize this will break.'%value)
+        if not _is_valid_uri(value):
+            logger.warning('%s does not look like a valid URI, trying to serialize this will break.'%value)
 
 
         try:
@@ -218,12 +215,21 @@ class URIRef(Identifier):
         return unicode(self)
 
     def n3(self, namespace_manager = None):
-        if not _is_valid_uri(self): 
+        """
+        This will do a limited check for valid URIs,
+        essentially just making sure that the string includes no illegal
+        characters (``<, >, ", {, }, |, \\, `, ^``)
+
+        :param namespace_manager: if not None, will be used to make up
+             a prefixed name
+        """
+
+        if not _is_valid_uri(self):
             raise Exception('"%s" does not look like a valid URI, I cannot serialize this as N3/Turtle. Perhaps you wanted to urlencode it?'%self)
 
-        if namespace_manager: 
+        if namespace_manager:
             return namespace_manager.normalizeUri(self)
-        else: 
+        else:
             return "<%s>" % self
 
     def defrag(self):
@@ -517,7 +523,7 @@ class Literal(Identifier):
 
 
     """)
-    
+
 
     if not py3compat.PY3:
         __slots__ = ("language", "datatype", "value", "_language",
@@ -537,28 +543,28 @@ class Literal(Identifier):
                 "A Literal can only have one of lang or datatype, "
                 "per http://www.w3.org/TR/rdf-concepts/#section-Graph-Literal")
 
-        if lang and not _is_valid_langtag(lang): 
+        if lang and not _is_valid_langtag(lang):
             raise Exception("'%s' is not a valid language tag!"%lang)
 
         if datatype:
             datatype = URIRef(datatype)
 
         value = None
-        if isinstance(lexical_or_value, Literal):  
+        if isinstance(lexical_or_value, Literal):
             # create from another Literal instance
 
             lang = lang or lexical_or_value.language
-            if datatype: 
+            if datatype:
                 # override datatype
                 value = _castLexicalToPython(lexical_or_value, datatype)
-            else: 
+            else:
                 datatype = lexical_or_value.datatype
                 value = lexical_or_value.value
 
         elif isinstance(lexical_or_value, basestring):
-                # passed a string 
+                # passed a string
                 # try parsing lexical form of datatyped literal
-                value = _castLexicalToPython(lexical_or_value, datatype) 
+                value = _castLexicalToPython(lexical_or_value, datatype)
 
                 if value is not None and normalize:
                     _value, _datatype = _castPythonToLiteral(value)
@@ -566,7 +572,7 @@ class Literal(Identifier):
                         lexical_or_value = _value
 
         else:
-            # passed some python object 
+            # passed some python object
             value = lexical_or_value
             _value, _datatype = _castPythonToLiteral(lexical_or_value)
 
@@ -1130,7 +1136,7 @@ class Literal(Identifier):
             %(u)s'"1"^^xsd:integer'
         '''
         if namespace_manager:
-            return self._literal_n3(qname_callback = 
+            return self._literal_n3(qname_callback =
                                     namespace_manager.normalizeUri)
         else:
             return self._literal_n3()
@@ -1287,6 +1293,8 @@ class Literal(Identifier):
 
 
 def _parseXML(xmlstring):
+    if not py3compat.PY3:
+        xmlstring = xmlstring.encode('utf-8')
     retval = xml.dom.minidom.parseString(
         "<rdflibtoplevelelement>%s</rdflibtoplevelelement>" % xmlstring)
     retval.normalize()
@@ -1316,7 +1324,7 @@ def _writeXML(xmlnode):
     # for clean round-tripping, remove headers -- I have great and
     # specific worries that this will blow up later, but this margin
     # is too narrow to contain them
-    if s.startswith(b(u'<?xml version="1.0" encoding="utf-8"?>')):
+    if s.startswith(b('<?xml version="1.0" encoding="utf-8"?>')):
         s = s[38:]
     if s.startswith(b('<rdflibtoplevelelement>')):
         s = s[23:-24]
@@ -1471,13 +1479,13 @@ def _castLexicalToPython(lexical, datatype):
         except:
             # not a valid lexical representation for this dt
             return None
-    elif convFunc is None: 
+    elif convFunc is None:
         # no conv func means 1-1 lexical<->value-space mapping
-        try: 
+        try:
             return unicode(lexical)
-        except UnicodeDecodeError: 
+        except UnicodeDecodeError:
             return unicode(lexical, 'utf-8')
-    else: 
+    else:
         # no convFunc - unknown data-type
         return None
 
@@ -1488,13 +1496,13 @@ def bind(datatype, pythontype, constructor=None, lexicalizer=None):
     :param constructor: an optional function for converting lexical forms
                         into a Python instances, if not given the pythontype
                         is used directly
-                        
+
     :param lexicalizer: an optinoal function for converting python objects to
                         lexical form, if not given object.__str__ is used
 
     """
     if datatype in _toPythonMapping:
-        _LOGGER.warning("datatype '%s' was already bound. Rebinding." %
+        logger.warning("datatype '%s' was already bound. Rebinding." %
                         datatype)
 
     if constructor == None:
@@ -1563,7 +1571,15 @@ class Statement(Node, tuple):
 
 # Nodes are ordered like this
 # See http://www.w3.org/TR/sparql11-query/#modOrderBy
-_ORDERING = dict(map(reversed, enumerate([BNode, Variable, URIRef, Literal])))
+# we leave "space" for more subclasses of Node elsewhere
+# default-dict to grazefully fail for new subclasses
+_ORDERING = defaultdict(int)
+_ORDERING.update({
+    BNode: 10,
+    Variable: 20,
+    URIRef: 30,
+    Literal: 40
+    })
 
 
 def _isEqualXMLNode(node, other):
