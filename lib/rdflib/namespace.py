@@ -57,8 +57,7 @@ The following namespaces are available by directly importing from rdflib:
 """)
 
 import logging
-
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 import os
 
@@ -68,9 +67,9 @@ from urllib import pathname2url
 from rdflib.term import URIRef, Variable, _XSD_PFX, _is_valid_uri
 
 __all__ = [
-    'is_ncname', 'split_uri', 'Namespace', 
+    'is_ncname', 'split_uri', 'Namespace',
     'ClosedNamespace', 'NamespaceManager',
-    'XMLNS', 'RDF', 'RDFS', 'XSD', 'OWL', 
+    'XMLNS', 'RDF', 'RDFS', 'XSD', 'OWL',
     'SKOS', 'DOAP', 'FOAF', 'DC', 'DCTERMS', 'VOID']
 
 
@@ -85,11 +84,11 @@ class Namespace(unicode):
     rdflib.term.URIRef(%(u)s'http://example.org/Person')
     >>> n['first-name'] # as item - for things that are not valid python identifiers
     rdflib.term.URIRef(%(u)s'http://example.org/first-name')
-  
+
     """)
-    
-    
-    def __new__(cls, value): 
+
+
+    def __new__(cls, value):
         try:
             rt = unicode.__new__(cls, value)
         except UnicodeDecodeError:
@@ -114,7 +113,7 @@ class Namespace(unicode):
         else:
             return self.term(name)
 
-    def __repr__(self): 
+    def __repr__(self):
         return "Namespace(%s)"%unicode.__repr__(self)
 
 
@@ -131,7 +130,7 @@ class URIPattern(unicode):
 
     """)
 
-    def __new__(cls, value): 
+    def __new__(cls, value):
         try:
             rt = unicode.__new__(cls, value)
         except UnicodeDecodeError:
@@ -141,12 +140,12 @@ class URIPattern(unicode):
     def __mod__(self, *args, **kwargs):
         return URIRef(unicode(self).__mod__(*args, **kwargs))
 
-    def format(self, *args, **kwargs): 
+    def format(self, *args, **kwargs):
         return URIRef(unicode.format(self, *args, **kwargs))
 
-    def __repr__(self): 
+    def __repr__(self):
         return "URIPattern(%r)"%unicode.__repr__(self)
-    
+
 
 
 class ClosedNamespace(object):
@@ -323,7 +322,7 @@ class NamespaceManager(object):
 
     def compute_qname(self, uri, generate=True):
 
-        if not _is_valid_uri(uri): 
+        if not _is_valid_uri(uri):
             raise Exception('"%s" does not look like a valid URI, I cannot serialize this. Perhaps you wanted to urlencode it?'%uri)
 
 
@@ -345,13 +344,34 @@ class NamespaceManager(object):
             self.__cache[uri] = (prefix, namespace, name)
         return self.__cache[uri]
 
-    def bind(self, prefix, namespace, override=True):
+    def bind(self, prefix, namespace, override=True, replace=False):
+
+        """bind a given namespace to the prefix
+
+        if override, rebind, even if the given namespace is already
+        bound to another prefix.
+
+        if replace, replace any existing prefix with the new namespace
+
+        """
+
         namespace = URIRef(unicode(namespace))
         # When documenting explain that override only applies in what cases
         if prefix is None:
             prefix = ''
         bound_namespace = self.store.namespace(prefix)
+        # Check if the bound_namespace contains a URI
+        # and if so convert it into a URIRef for comparison
+        # This is to prevent duplicate namespaces with the
+        # same URI
+        if bound_namespace:
+            bound_namespace = URIRef(bound_namespace)
         if bound_namespace and bound_namespace != namespace:
+
+            if replace:
+                self.store.bind(prefix, namespace)
+                return
+
             # prefix already in use for different namespace
             #
             # append number to end of prefix until we find one
@@ -361,6 +381,11 @@ class NamespaceManager(object):
             num = 1
             while 1:
                 new_prefix = "%s%s" % (prefix, num)
+                tnamespace = self.store.namespace(new_prefix)
+                if tnamespace and namespace == URIRef(tnamespace):
+                    # the prefix is already bound to the correct
+                    # namespace
+                    return
                 if not self.store.namespace(new_prefix):
                     break
                 num += 1

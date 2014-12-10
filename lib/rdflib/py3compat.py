@@ -3,6 +3,7 @@ Utility functions and objects to ease Python 3 compatibility.
 """
 import sys
 import re
+import codecs
 
 try:
     from functools import wraps
@@ -47,6 +48,12 @@ if PY3:
     # ---------
     def b(s):
         return s.encode('ascii')
+
+    def ascii(stream):
+        return codecs.getreader('ascii')(stream)
+
+    def bopen(*args, **kwargs):
+        return open(*args, mode = 'rb', **kwargs)
 
     bytestype = bytes
 
@@ -95,6 +102,11 @@ else:
     def b(s):
         return s
 
+    def ascii(stream):
+        return stream
+
+    bopen = open
+
     bytestype = str
 
     # Abstract u'abc' syntax:
@@ -123,10 +135,19 @@ else:
     def sign(n):
         return cmp(n, 0)
 
+r_unicodeEscape = re.compile(r'(\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})')
+
+def _unicodeExpand(s):
+    return r_unicodeEscape.sub(lambda m: unichr(int(m.group(0)[2:], 16)), s)
 
 def decodeStringEscape(s):
+
+    """
+    s is byte-string - replace \ escapes in string
+    """
+
     if not PY3:
-        return s.decode('string-escape')
+        s = s.decode('string-escape')
     else:
         s = s.replace('\\t', '\t')
         s = s.replace('\\n', '\n')
@@ -137,4 +158,27 @@ def decodeStringEscape(s):
         s = s.replace("\\'", "'")
         s = s.replace('\\\\', '\\')
 
-        return re.sub(r'(\\u[0-9A-Fa-f]+)', lambda m: chr(int(m.group(0)[2:], 16)), s)
+    return s
+    #return _unicodeExpand(s) # hmm - string escape doesn't do unicode escaping
+
+def decodeUnicodeEscape(s):
+    """
+    s is a unicode string
+    replace \n and \u00AC unicode escapes
+    """
+    if not PY3:
+        s = s.encode('utf-8').decode('string-escape')
+        s = _unicodeExpand(s)
+    else:
+        s = s.replace('\\t', '\t')
+        s = s.replace('\\n', '\n')
+        s = s.replace('\\r', '\r')
+        s = s.replace('\\b', '\b')
+        s = s.replace('\\f', '\f')
+        s = s.replace('\\"', '"')
+        s = s.replace("\\'", "'")
+        s = s.replace('\\\\', '\\')
+
+        s = _unicodeExpand(s) # hmm - string escape doesn't do unicode escaping
+
+    return s

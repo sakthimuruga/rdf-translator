@@ -1,9 +1,7 @@
 from rdflib.term import Literal  # required for doctests
-l = Literal('')
-del l
+assert Literal # avoid warning
 from rdflib.namespace import Namespace  # required for doctests
-n = Namespace('xxx')
-del n
+assert Namespace # avoid warning
 from rdflib.py3compat import format_doctest_out
 
 __doc__ = format_doctest_out("""\
@@ -17,26 +15,60 @@ RDFLib defines the following kinds of Graphs:
 
 Graph
 -----
-An RDF graph is a set of RDF triples. Graphs support the python ``in`` operator, as well as iteration and some operations like union, difference and intersection.
+
+An RDF graph is a set of RDF triples. Graphs support the python ``in``
+operator, as well as iteration and some operations like union,
+difference and intersection.
+
+see :class:`~rdflib.graph.Graph`
 
 Conjunctive Graph
 -----------------
 
-A Conjunctive Graph is the most relevant collection of graphs that are considered to be the boundary for closed world assumptions.  This boundary is equivalent to that of the store instance (which is itself uniquely identified and distinct from other instances of :class:`Store` that signify other Conjunctive Graphs).  It is equivalent to all the named graphs within it and associated with a ``_default_`` graph which is automatically assigned a :class:`BNode` for an identifier - if one isn't given.  
+A Conjunctive Graph is the most relevant collection of graphs that are
+considered to be the boundary for closed world assumptions.  This
+boundary is equivalent to that of the store instance (which is itself
+uniquely identified and distinct from other instances of
+:class:`Store` that signify other Conjunctive Graphs).  It is
+equivalent to all the named graphs within it and associated with a
+``_default_`` graph which is automatically assigned a :class:`BNode`
+for an identifier - if one isn't given.
 
+see :class:`~rdflib.graph.ConjunctiveGraph`
 
 Quoted graph
 ------------
 
-The notion of an RDF graph [14] is extended to include the concept of a formula node. A formula node may occur wherever any other kind of node can appear. Associated with a formula node is an RDF graph that is completely disjoint from all other graphs; i.e. has no nodes in common with any other graph. (It may contain the same labels as other RDF graphs; because this is, by definition, a separate graph, considerations of tidiness do not apply between the graph at a formula node and any other graph.)
+The notion of an RDF graph [14] is extended to include the concept of
+a formula node. A formula node may occur wherever any other kind of
+node can appear. Associated with a formula node is an RDF graph that
+is completely disjoint from all other graphs; i.e. has no nodes in
+common with any other graph. (It may contain the same labels as other
+RDF graphs; because this is, by definition, a separate graph,
+considerations of tidiness do not apply between the graph at a formula
+node and any other graph.)
 
-This is intended to map the idea of "{ N3-expression }" that is used by N3 into an RDF graph upon which RDF semantics is defined.
+This is intended to map the idea of "{ N3-expression }" that is used
+by N3 into an RDF graph upon which RDF semantics is defined.
+
+see :class:`~rdflib.graph.QuotedGraph`
 
 Dataset
 -------
 
-The RDF 1.1 Dataset, a small extension to the Conjunctive Graph. The primary term is "graphs in the datasets" and not "contexts with quads" so there is a separate method to set/retrieve a graph in a dataset and to operate with dataset graphs. As a consequence of this approach, dataset graphs cannot be identified with blank nodes, a name is always required (RDFLib will automatically add a name if one is not provided at creation time). This implementation includes a convenience method to directly add a single quad to a dataset graph.
+The RDF 1.1 Dataset, a small extension to the Conjunctive Graph. The
+primary term is "graphs in the datasets" and not "contexts with quads"
+so there is a separate method to set/retrieve a graph in a dataset and
+to operate with dataset graphs. As a consequence of this approach,
+dataset graphs cannot be identified with blank nodes, a name is always
+required (RDFLib will automatically add a name if one is not provided
+at creation time). This implementation includes a convenience method
+to directly add a single quad to a dataset graph.
 
+see :class:`~rdflib.graph.Dataset`
+
+Working with graphs
+===================
 
 Instantiating Graphs with default store (IOMemory) and default identifier
 (a BNode):
@@ -97,13 +129,15 @@ via triple pattern:
 ``None`` terms in calls to :meth:`~rdflib.graph.Graph.triples` can be
 thought of as "open variables".
 
-Graph support set-theoretic operators, you can add/subtract graphs, as well as
-intersection (with multiplication operator g1*g2) and xor (g1 ^ g2).
+Graph support set-theoretic operators, you can add/subtract graphs, as
+well as intersection (with multiplication operator g1*g2) and xor (g1
+^ g2).
 
-Note that BNode IDs are kept when doing set-theoretic operations, this may or
-may not be what you want. Two named graphs within the same application probably
-want share BNode IDs, two graphs with data from different sources probably not.
-If your BNode IDs are all generated by RDFLib they are UUIDs and unique.
+Note that BNode IDs are kept when doing set-theoretic operations, this
+may or may not be what you want. Two named graphs within the same
+application probably want share BNode IDs, two graphs with data from
+different sources probably not.  If your BNode IDs are all generated
+by RDFLib they are UUIDs and unique.
 
     >>> g1 = Graph()
     >>> g2 = Graph()
@@ -196,7 +230,7 @@ Using Namespace class:
 """)
 
 import logging
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # import md5
 import random
@@ -221,13 +255,11 @@ from rdflib import plugin, exceptions, query
 
 from rdflib.term import Node, URIRef, Genid
 from rdflib.term import BNode
-from rdflib.term import Literal
+
+import rdflib.term
 
 from rdflib.paths import Path
 
-assert Literal
-from rdflib.namespace import Namespace
-assert Namespace
 from rdflib.store import Store
 from rdflib.serializer import Serializer
 from rdflib.parser import Parser
@@ -243,8 +275,8 @@ import tempfile
 from urlparse import urlparse
 
 __all__ = [
-    'Graph', 'ConjunctiveGraph', 'QuotedGraph', 'GraphValue', 'Seq',
-    'BackwardCompatGraph', 'ModificationException', 'Dataset',
+    'Graph', 'ConjunctiveGraph', 'QuotedGraph', 'Seq',
+    'ModificationException', 'Dataset',
     'UnSupportedAggregateOperation', 'ReadOnlyGraphAggregate']
 
 
@@ -283,6 +315,7 @@ class Graph(Node):
         self.__namespace_manager = namespace_manager
         self.context_aware = False
         self.formula_aware = False
+        self.default_union = False
 
     def __get_store(self):
         return self.__store
@@ -300,8 +333,8 @@ class Graph(Node):
     def _set_namespace_manager(self, nm):
         self.__namespace_manager = nm
 
-    namespace_manager = property(_get_namespace_manager, 
-                                 _set_namespace_manager, 
+    namespace_manager = property(_get_namespace_manager,
+                                 _set_namespace_manager,
                                  doc="this graph's namespace-manager")
 
     def __repr__(self):
@@ -364,17 +397,11 @@ class Graph(Node):
     def addN(self, quads):
         """Add a sequence of triple with context"""
 
-        def assertnode(t):
-            assert isinstance(t, Node), \
-                'Term %s must be an rdflib term' % (t,)
-            return True
-
         self.__store.addN((s, p, o, c) for s, p, o, c in quads
                           if isinstance(c, Graph)
                           and c.identifier is self.identifier
-                          and assertnode(s)
-                          and assertnode(p)
-                          and assertnode(o))
+                          and _assertnode(s,p,o)
+                          )
 
     def remove(self, (s, p, o)):
         """Remove a triple from the graph
@@ -390,7 +417,7 @@ class Graph(Node):
         Returns triples that match the given triple pattern. If triple pattern
         does not provide a context, all contexts will be searched.
         """
-        if isinstance(p, Path): 
+        if isinstance(p, Path):
             for _s, _o in p.eval(self, s, o):
                 yield (_s, p, _o)
         else:
@@ -398,11 +425,11 @@ class Graph(Node):
                 yield (s, p, o)
 
     @py3compat.format_doctest_out
-    def __getitem__(self, item): 
+    def __getitem__(self, item):
         """
         A graph can be "sliced" as a shortcut for the triples method
-        The python slice syntax is (ab)used for specifying triples. 
-        A generator over matches is returned, 
+        The python slice syntax is (ab)used for specifying triples.
+        A generator over matches is returned,
         the returned tuples include only the parts not given
 
         >>> import rdflib
@@ -411,7 +438,7 @@ class Graph(Node):
 
         >>> list(g[rdflib.URIRef('urn:bob')]) # all triples about bob
         [(rdflib.term.URIRef(%(u)s'http://www.w3.org/2000/01/rdf-schema#label'), rdflib.term.Literal(%(u)s'Bob'))]
-        
+
         >>> list(g[:rdflib.RDFS.label]) # all label triples
         [(rdflib.term.URIRef(%(u)s'urn:bob'), rdflib.term.Literal(%(u)s'Bob'))]
 
@@ -421,7 +448,7 @@ class Graph(Node):
         Combined with SPARQL paths, more complex queries can be
         written concisely:
 
-        Name of all Bobs friends: 
+        Name of all Bobs friends:
 
         g[bob : FOAF.knows/FOAF.name ]
 
@@ -439,32 +466,32 @@ class Graph(Node):
 
         """
 
-        if isinstance(item, slice): 
+        if isinstance(item, slice):
 
             s,p,o=item.start,item.stop,item.step
             if s is None and p is None and o is None:
                 return self.triples((s,p,o))
-            elif s is None and p is None: 
+            elif s is None and p is None:
                 return self.subject_predicates(o)
-            elif s is None and o is None: 
+            elif s is None and o is None:
                 return self.subject_objects(p)
-            elif p is None and o is None: 
+            elif p is None and o is None:
                 return self.predicate_objects(s)
-            elif s is None: 
+            elif s is None:
                 return self.subjects(p,o)
-            elif p is None: 
+            elif p is None:
                 return self.predicates(s,o)
-            elif o is None: 
+            elif o is None:
                 return self.objects(s,p)
-            else: 
-                # all given 
+            else:
+                # all given
                 return (s,p,o) in self
 
         elif isinstance(item, (Path,Node)):
 
             return self.predicate_objects(item)
-            
-        else: 
+
+        else:
             raise TypeError("You can only index a graph by a single rdflib term or path, or a slice of rdflib terms.")
 
     def __len__(self):
@@ -761,11 +788,15 @@ class Graph(Node):
 
         list is an RDF collection.
         """
+        chain = set([list])
         while list:
             item = self.value(list, RDF.first)
-            if item:
+            if item is not None:
                 yield item
             list = self.value(list, RDF.rest)
+            if list in chain:
+                raise ValueError("List contains a recursive rdf:rest reference")
+            chain.add(list)
 
     def transitiveClosure(self, func, arg, seen=None):
         """
@@ -869,11 +900,11 @@ class Graph(Node):
     def bind(self, prefix, namespace, override=True):
         """Bind prefix to namespace
 
-        If override is True will bind namespace to given prefix if namespace
-        was already bound to a different prefix.
+        If override is True will bind namespace to given prefix even
+        if namespace was already bound to a different prefix.
 
         for example:  graph.bind('foaf', 'http://xmlns.com/foaf/0.1/')
-        
+
         """
         return self.namespace_manager.bind(
             prefix, namespace, override=override)
@@ -1009,17 +1040,17 @@ class Graph(Node):
               result='sparql', initNs=None, initBindings=None,
               use_store_provided=True, **kwargs):
         """
-        Query this graph. 
-        
+        Query this graph.
+
         A type of 'prepared queries' can be realised by providing
         initial variable bindings with initBindings
 
-        Initial namespaces are used to resolve prefixes used in the query, 
+        Initial namespaces are used to resolve prefixes used in the query,
         if none are given, the namespaces from the graph's namespace manager
-        are used. 
+        are used.
 
         :returntype: rdflib.query.QueryResult
-        
+
         """
 
         initBindings = initBindings or {}
@@ -1029,7 +1060,7 @@ class Graph(Node):
             try:
                 return self.store.query(
                     query_object, initNs, initBindings,
-                    self.context_aware
+                    self.default_union
                     and '__UNION__'
                     or self.identifier,
                     **kwargs)
@@ -1053,9 +1084,9 @@ class Graph(Node):
             try:
                 return self.store.update(
                     update_object, initNs, initBindings,
-                    self.context_aware
-                    and self.identifier
-                    or '__UNION__',
+                    self.default_union
+                    and '__UNION__'
+                    or self.identifier,
                     **kwargs)
             except NotImplementedError:
                 pass  # store has no own implementation
@@ -1153,7 +1184,7 @@ class Graph(Node):
             >>> assert resource.graph is graph
 
         """
-        if not isinstance(identifier, Node): 
+        if not isinstance(identifier, Node):
             identifier = URIRef(identifier)
         return Resource(self, identifier)
 
@@ -1215,18 +1246,21 @@ class Graph(Node):
 
         return retval
 
-
 class ConjunctiveGraph(Graph):
-    """
-    A ConjunctiveGraph is an (unamed) aggregation of all the named graphs
-    within the Store. It has a ``default`` graph, whose name is associated
-    with the ConjunctiveGraph throughout its life. All methods work against
-    this default graph. Its constructor can take an identifier to use as the
-    name of this default graph or it will assign a BNode.
 
-    In practice, it is typical to instantiate a ConjunctiveGraph if you want
-    to add triples to the Store but don't care to mint a URI for the graph.
-    Any triples in the graph can still be addressed.
+    """
+    A ConjunctiveGraph is an (unamed) aggregation of all the named
+    graphs in a store.
+
+    It has a ``default`` graph, whose name is associated with the
+    graph throughout its life. :meth:`__init__` can take an identifier
+    to use as the name of this default graph or it will assign a
+    BNode.
+
+    All methods that add triples work against this default graph.
+
+    All queries are carried out against the union of all graphs.
+
     """
 
     def __init__(self, store='default', identifier=None):
@@ -1234,6 +1268,7 @@ class ConjunctiveGraph(Graph):
         assert self.store.context_aware, ("ConjunctiveGraph must be backed by"
                                           " a context aware store.")
         self.context_aware = True
+        self.default_union = True # Conjunctive!
         self.default_context = Graph(store=self.store,
                                      identifier=identifier or BNode())
 
@@ -1242,54 +1277,122 @@ class ConjunctiveGraph(Graph):
                    "[a rdflib:Store;rdfs:label '%s']]")
         return pattern % self.store.__class__.__name__
 
+    def _spoc(self, triple_or_quad, default=False):
+        """
+        helper method for having methods that support
+        either triples or quads
+        """
+        if triple_or_quad is None:
+            return (None, None, None, self.default_context if default else None)
+        if len(triple_or_quad) == 3:
+            c = self.default_context if default else None
+            (s, p, o) = triple_or_quad
+        elif len(triple_or_quad) == 4:
+            (s, p, o, c) = triple_or_quad
+            c = self._graph(c)
+        return s,p,o,c
+
+
     def __contains__(self, triple_or_quad):
         """Support for 'triple/quad in graph' syntax"""
-        context = None
-        if len(triple_or_quad) == 4:
-            context = triple_or_quad[3]
-        for t in self.triples(triple_or_quad[:3], context=context):
+        s,p,o,c = self._spoc(triple_or_quad)
+        for t in self.triples((s,p,o), context=c):
             return True
         return False
 
-    def add(self, (s, p, o)):
-        """Add the triple to the default context"""
-        self.store.add((s, p, o), context=self.default_context, quoted=False)
+
+    def add(self, triple_or_quad):
+
+        """
+        Add a triple or quad to the store.
+
+        if a triple is given it is added to the default context
+        """
+
+        s,p,o,c = self._spoc(triple_or_quad, default=True)
+
+        _assertnode(s,p,o)
+
+        self.store.add((s, p, o), context=c, quoted=False)
+
+    def _graph(self, c):
+        if c is None: return None
+        if not isinstance(c, Graph):
+            return self.get_context(c)
+        else:
+            return c
+
 
     def addN(self, quads):
         """Add a sequence of triples with context"""
-        self.store.addN(quads)
 
-    def remove(self, (s, p, o)):
-        """Removes from all its contexts"""
-        self.store.remove((s, p, o), context=None)
+        self.store.addN(
+            (s, p, o, self._graph(c)) for s, p, o, c in quads if
+            _assertnode(s, p, o)
+            )
 
-    def triples(self, (s, p, o), context=None):
-        """Iterate over all the triples in the entire conjunctive graph"""
-        if isinstance(p, Path): 
+    def remove(self, triple_or_quad):
+        """
+        Removes a triple or quads
+
+        if a triple is given it is removed from all contexts
+
+        a quad is removed from the given context only
+
+        """
+        s,p,o,c = self._spoc(triple_or_quad)
+
+        self.store.remove((s, p, o), context=c)
+
+    def triples(self, triple_or_quad, context=None):
+        """
+        Iterate over all the triples in the entire conjunctive graph
+
+        For legacy reasons, this can take the context to query either
+        as a fourth element of the quad, or as the explicit context
+        keyword paramater. The kw param takes precedence.
+        """
+
+        s,p,o,c = self._spoc(triple_or_quad)
+        context = self._graph(context or c)
+
+        if self.default_union:
+            if context==self.default_context:
+                context = None
+        else:
             if context is None:
-                for s, o in p.eval(self, s, o):
-                    yield (s, p, o)
-            else:
-                for s, o in p.eval(self.get_context(context), s, o):
-                    yield (s, p, o)
+                context = self.default_context
+
+        if isinstance(p, Path):
+            if context is None:
+                context = self
+
+            for s, o in p.eval(context, s, o):
+                yield (s, p, o)
         else:
             for (s, p, o), cg in self.store.triples((s, p, o), context=context):
                 yield s, p, o
 
-    def quads(self, pattern=None):
+    def quads(self, triple_or_quad=None):
         """Iterate over all the quads in the entire conjunctive graph"""
-        if pattern is None:
-            s, p, o = (None, None, None)
-        else:
-            s, p, o = pattern
-        for (s, p, o), cg in self.store.triples((s, p, o), context=None):
+
+        s,p,o,c = self._spoc(triple_or_quad)
+
+        for (s, p, o), cg in self.store.triples((s, p, o), context=c):
             for ctx in cg:
                 yield s, p, o, ctx
 
-    def triples_choices(self, (s, p, o)):
+    def triples_choices(self, (s, p, o), context=None):
         """Iterate over all the triples in the entire conjunctive graph"""
+
+        if context is None:
+            if not self.default_union:
+                context=self.default_context
+        else:
+            context = self._graph(context)
+
         for (s1, p1, o1), cg in self.store.triples_choices((s, p, o),
-                                                           context=None):
+                                                           context=context):
             yield (s1, p1, o1)
 
     def __len__(self):
@@ -1303,6 +1406,9 @@ class ConjunctiveGraph(Graph):
         """
         for context in self.store.contexts(triple):
             if isinstance(context, Graph):
+                # TODO: One of these should never happen and probably
+                # should raise an exception rather than smoothing over
+                # the weirdness - see #225
                 yield context
             else:
                 yield self.get_context(context)
@@ -1344,10 +1450,12 @@ class ConjunctiveGraph(Graph):
             source=source, publicID=publicID, location=location,
             file=file, data=data, format=format)
 
-        # id = self.context_id(self.absolutize(source.getPublicId()))
-        g_id = URIRef(publicID and publicID or source.getPublicId())
+        g_id = publicID and publicID or source.getPublicId()
+        if not isinstance(g_id, Node):
+            g_id = URIRef(g_id)
+
         context = Graph(store=self.store, identifier=g_id)
-        context.remove((None, None, None))
+        context.remove((None, None, None)) # hmm ?
         context.parse(source, publicID=publicID, format=format,
                       location=location, file=file, data=data, **args)
         return context
@@ -1355,6 +1463,9 @@ class ConjunctiveGraph(Graph):
     def __reduce__(self):
         return (ConjunctiveGraph, (self.store, self.identifier))
 
+
+
+DATASET_DEFAULT_GRAPH_ID = URIRef('urn:x-rdflib:default')
 
 class Dataset(ConjunctiveGraph):
     __doc__ = format_doctest_out("""
@@ -1377,8 +1488,6 @@ class Dataset(ConjunctiveGraph):
     >>> # Create a graph in the dataset, if the graph name has already been
     >>> # used, the corresponding graph will be returned
     >>> # (ie, the Dataset keeps track of the constituent graphs)
-    >>> # The special argument Dataset.DEFAULT can be used to return the
-    >>> # default graph
     >>> g = ds.graph(URIRef('http://www.example.com/gr'))
     >>>
     >>> # add triples to the new graph as usual
@@ -1387,7 +1496,7 @@ class Dataset(ConjunctiveGraph):
     ...     URIRef('http://example.org/y'),
     ...     Literal('bar')) )
     >>> # alternatively: add a quad to the dataset -> goes to the graph
-    >>> ds.add_quad(
+    >>> ds.add(
     ...     (URIRef('http://example.org/x'),
     ...     URIRef('http://example.org/z'),
     ...     Literal('foo-bar'),g) )
@@ -1461,11 +1570,15 @@ class Dataset(ConjunctiveGraph):
     .. versionadded:: 4.0
     """)
 
-    DEFAULT = "DEFAULT"
-
-    def __init__(self, store='default'):
+    def __init__(self, store='default', default_union=False):
         super(Dataset, self).__init__(store=store, identifier=None)
-        self.graph_names = {Dataset.DEFAULT: self}
+
+        if not self.store.graph_aware:
+            raise Exception("DataSet must be backed by a graph-aware store!")
+        self.default_context = Graph(store=self.store, identifier=DATASET_DEFAULT_GRAPH_ID)
+
+        self.default_union = default_union
+
 
     def __str__(self):
         pattern = ("[a rdflib:Dataset;rdflib:storage "
@@ -1479,102 +1592,45 @@ class Dataset(ConjunctiveGraph):
                 "genid", "http://rdflib.net" + rdflib_skolem_genid,
                 override=False)
             identifier = BNode().skolemize()
-        elif identifier == Dataset.DEFAULT:
-            return self
-        else:
-            if isinstance(identifier, BNode):
-                raise Exception(
-                    "Blank nodes cannot be Graph identifiers in RDF Datasets")
-            if not isinstance(identifier, URIRef):
-                identifier = URIRef(identifier)
 
-        if identifier in self.graph_names.keys():
-            return self.graph_names[identifier]
-        else:
-            retval = Graph(store=self.store, identifier=identifier)
-            self.graph_names[identifier] = retval
-            return retval
+        g = self._graph(identifier)
+
+        self.store.add_graph(g)
+        return g
+
+    def parse(self, source=None, publicID=None, format="xml",
+              location=None, file=None, data=None, **args):
+        c = ConjunctiveGraph.parse(self, source, publicID, format, location, file, data, **args)
+        self.graph(c)
+        return c
+
+    def add_graph(self, g):
+        """alias of graph for consistency"""
+        return self.graph(g)
 
     def remove_graph(self, g):
-        if g is None or g == Dataset.DEFAULT:
+        if not isinstance(g, Graph):
+            g = self.get_context(g)
+
+        self.store.remove_graph(g)
+        if g is None or g == self.default_context:
             # default graph cannot be removed
-            return
-        else:
-            if isinstance(g, Graph):
-                try:
-                    del self.graph_names[g.identifier]
-                    self.remove_context(g.identifier)
-                except KeyError:
-                    pass
-            else:
-                try:
-                    del self.graph_names[URIRef(g)]
-                    self.remove_context(g)
-                except KeyError:
-                    pass
+            # only triples deleted, so add it back in
+            self.store.add_graph(self.default_context)
 
-    def graphs(self, empty=True):
-        if empty:
-            # All graphs should be returned, including the empty ones:
-            for n in self.graph_names.keys():
-                yield n
-        else:
-            # Only non-empty graphs should be returned; the contexts() call of
-            # the conjunctive graph does the job
-            for c in self.contexts():
-                if isinstance(c.identifier, BNode):
-                    yield Dataset.DEFAULT
-                else:
-                    yield c.identifier
-
-    def add_quad(self, quad):
-        (s, p, o, g) = quad
-        if g is None:
-            self.add((s, p, o))
-        else:
-            if isinstance(g, Graph):
-                try:
-                    self.graph_names[g.identifier].add((s, p, o))
-                except KeyError:
-                    pass
-            else:
-                try:
-                    self.graph_names[URIRef(g)].add((s, p, o))
-                except KeyError:
-                    pass
-
-    def remove_quad(self, (s, p, o, g)):
-        if g is None:
-            self.remove((s, p, o))
-        else:
-            if isinstance(g, Graph):
-                try:
-                    self.graph_names[g.identifier].remove((s, p, o))
-                except KeyError:
-                    pass
-            else:
-                try:
-                    self.graph_names[URIRef(g)].remove((s, p, o))
-                except KeyError:
-                    pass
+    def contexts(self, triple=None):
+        default = False
+        for c in super(Dataset, self).contexts(triple):
+            default|=c.identifier == DATASET_DEFAULT_GRAPH_ID
+            yield c
+        if not default: yield self.graph(DATASET_DEFAULT_GRAPH_ID)
 
     def quads(self, quad):
-        (s, p, o, g) = quad
-        for s, p, o, c in super(Dataset, self).quads((s, p, o)):
-            if g is None:
-                # all quads have to be returned. However, the blank node name
-                # for the default graph should be removed
-                if isinstance(c.identifier, BNode):
-                    yield (s, p, o, None)
-                else:
-                    yield (s, p, o, c.identifier)
-            elif isinstance(g, Graph):
-                # only quads of a specific graph should be returned:
-                if g.identifier == c.identifier:
-                    yield (s, p, o, c.identifier)
+        for s, p, o, c in super(Dataset, self).quads(quad):
+            if c.identifier==self.default_context:
+                yield (s, p, o, None)
             else:
-                if ("%s" % g) == ("%s" % c.identifier):
-                    yield (s, p, o, c.identifier)
+                yield (s, p, o, c.identifier)
 
 
 class QuotedGraph(Graph):
@@ -1587,16 +1643,26 @@ class QuotedGraph(Graph):
     def __init__(self, store, identifier):
         super(QuotedGraph, self).__init__(store, identifier)
 
-    def add(self, triple):
+    def add(self, (s, p, o)):
         """Add a triple with self as context"""
-        self.store.add(triple, self, quoted=True)
+        assert isinstance(s, Node), \
+            "Subject %s must be an rdflib term" % (s,)
+        assert isinstance(p, Node), \
+            "Predicate %s must be an rdflib term" % (p,)
+        assert isinstance(o, Node), \
+            "Object %s must be an rdflib term" % (o,)
+
+        self.store.add((s, p, o), self, quoted=True)
 
     def addN(self, quads):
         """Add a sequence of triple with context"""
+
         self.store.addN(
             (s, p, o, c) for s, p, o, c in quads
             if isinstance(c, QuotedGraph)
-            and c.identifier is self.identifier)
+            and c.identifier is self.identifier
+            and _assertnode(s, p, o)
+            )
 
     def n3(self):
         """Return an n3 identifier for the Graph"""
@@ -1613,31 +1679,11 @@ class QuotedGraph(Graph):
         return (QuotedGraph, (self.store, self.identifier))
 
 
-class GraphValue(QuotedGraph):
-    def __init__(self, store, identifier=None, graph=None):
-        if graph is not None:
-            assert identifier is None
-            np = store.node_pickler
-            identifier = md5()
-            s = list(graph.triples((None, None, None)))
-            s.sort()
-            for t in s:
-                identifier.update(b("^").join((np.dumps(i) for i in t)))
-            identifier = URIRef("data:%s" % identifier.hexdigest())
-            super(GraphValue, self).__init__(store, identifier)
-            for t in graph:
-                store.add(t, context=self)
-        else:
-            super(GraphValue, self).__init__(store, identifier)
-
-    def add(self, triple):
-        raise Exception("not mutable")
-
-    def remove(self, triple):
-        raise Exception("not mutable")
-
-    def __reduce__(self):
-        return (GraphValue, (self.store, self.identifier,))
+# Make sure QuotedGraph is ordered correctly
+# wrt to other Terms.
+# this must be done here, as the QuotedGraph cannot be
+# circularily imported in term.py
+rdflib.term._ORDERING[QuotedGraph]=11
 
 
 class Seq(object):
@@ -1688,123 +1734,6 @@ class Seq(object):
         """Item given by index from the Seq"""
         index, item = self._list.__getitem__(index)
         return item
-
-
-class BackwardCompatGraph(ConjunctiveGraph):
-
-    def __init__(self, backend='default'):
-        warnings.warn("Use ConjunctiveGraph instead. "
-                      "( from rdflib.graph import ConjunctiveGraph )",
-                      DeprecationWarning, stacklevel=2)
-        super(BackwardCompatGraph, self).__init__(store=backend)
-
-    def __get_backend(self):
-        return self.store
-    backend = property(__get_backend)
-
-    def open(self, configuration, create=True):
-        return ConjunctiveGraph.open(self, configuration, create)
-
-    def add(self, (s, p, o), context=None):
-        """Add to to the given context or to the default context"""
-        if context is not None:
-            c = self.get_context(context)
-            assert c.identifier == context, "%s != %s" % \
-                                            (c.identifier, context)
-        else:
-            c = self.default_context
-        self.store.add((s, p, o), context=c, quoted=False)
-
-    def remove(self, (s, p, o), context=None):
-        """Remove from the given context or from the default context"""
-        if context is not None:
-            context = self.get_context(context)
-        self.store.remove((s, p, o), context)
-
-    def triples(self, (s, p, o), context=None):
-        """Iterate over all the triples in the entire graph"""
-        if context is not None:
-            c = self.get_context(context)
-            assert c.identifier == context
-        else:
-            c = None
-        for (s, p, o), cg in self.store.triples((s, p, o), c):
-            yield (s, p, o)
-
-    def __len__(self, context=None):
-        """Number of triples in the entire graph"""
-        if context is not None:
-            context = self.get_context(context)
-        return self.store.__len__(context)
-
-    def get_context(self, identifier, quoted=False):
-        """Return a context graph for the given identifier
-
-        identifier must be a URIRef or BNode.
-        """
-        assert isinstance(identifier, URIRef) or \
-            isinstance(identifier, BNode), type(identifier)
-        if quoted:
-            assert False
-            return QuotedGraph(self.store, identifier)
-            # return QuotedGraph(self.store, Graph(store=self.store,
-            #                                     identifier=identifier))
-        else:
-            return Graph(store=self.store, identifier=identifier,
-                         namespace_manager=self)
-            # return Graph(self.store, Graph(store=self.store,
-            #                               identifier=identifier))
-
-    def remove_context(self, context):
-        """Remove the given context from the graph"""
-        self.store.remove((None, None, None), self.get_context(context))
-
-    def contexts(self, triple=None):
-        """Iterate over all contexts in the graph
-
-        If triple is specified, iterate over all contexts the triple is in.
-        """
-        for context in self.store.contexts(triple):
-            yield context.identifier
-
-    def subjects(self, predicate=None, object=None, context=None):
-        """Generate subjects with the given predicate and object"""
-        for s, p, o in self.triples((None, predicate, object), context):
-            yield s
-
-    def predicates(self, subject=None, object=None, context=None):
-        """Generate predicates with the given subject and object"""
-        for s, p, o in self.triples((subject, None, object), context):
-            yield p
-
-    def objects(self, subject=None, predicate=None, context=None):
-        """Generate objects with the given subject and predicate"""
-        for s, p, o in self.triples((subject, predicate, None), context):
-            yield o
-
-    def subject_predicates(self, object=None, context=None):
-        """Generate (subject, predicate) tuples for the given object"""
-        for s, p, o in self.triples((None, None, object), context):
-            yield s, p
-
-    def subject_objects(self, predicate=None, context=None):
-        """Generate (subject, object) tuples for the given predicate"""
-        for s, p, o in self.triples((None, predicate, None), context):
-            yield s, o
-
-    def predicate_objects(self, subject=None, context=None):
-        """Generate (predicate, object) tuples for the given subject"""
-        for s, p, o in self.triples((subject, None, None), context):
-            yield p, o
-
-    def __reduce__(self):
-        return (BackwardCompatGraph, (self.store, self.identifier))
-
-    def save(self, destination, format="xml", base=None, encoding=None):
-        warnings.warn("Use serialize method instead. ",
-                      DeprecationWarning, stacklevel=2)
-        self.serialize(destination=destination, format=format, base=base,
-                       encoding=encoding)
 
 
 class ModificationException(Exception):
@@ -1879,7 +1808,7 @@ class ReadOnlyGraphAggregate(ConjunctiveGraph):
 
     def triples(self, (s, p, o)):
         for graph in self.graphs:
-            if isinstance(p, Path): 
+            if isinstance(p, Path):
                 for s, o in p.eval(self, s, o):
                     yield s, p, o
             else:
@@ -1965,6 +1894,12 @@ class ReadOnlyGraphAggregate(ConjunctiveGraph):
 
     def __reduce__(self):
         raise UnSupportedAggregateOperation()
+
+def _assertnode(*terms):
+    for t in terms:
+        assert isinstance(t, Node), \
+            'Term %s must be an rdflib term' % (t,)
+    return True
 
 
 def test():

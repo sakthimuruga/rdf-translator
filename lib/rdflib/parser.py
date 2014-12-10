@@ -66,9 +66,9 @@ class StringInputSource(InputSource):
 
 
 headers = {
-    'User-Agent':
-    'Python RDF Translator (http://rdf-translator.appspot.com/)',
-    'Cache-Control': 'max-age=10'
+    'User-agent':
+    'Python RDF Translator (http://rdf-translator.appspot.com/)'
+    #'rdflib-%s (http://rdflib.net/; eikeon@eikeon.com)' % __version__
 }
 
 
@@ -89,6 +89,9 @@ class URLInputSource(InputSource):
             myheaders['Accept'] = 'text/n3, */*;q=0.1'
         elif format == 'nt':
             myheaders['Accept'] = 'text/plain, */*;q=0.1'
+        elif format == 'json-ld':
+            myheaders['Accept'] = (
+                'application/ld+json, application/json;p=0.9, */*;q=0.1')
         else:
             myheaders['Accept'] = (
                 'application/rdf+xml,text/rdf+n3;q=0.9,' +
@@ -103,6 +106,7 @@ class URLInputSource(InputSource):
         self.content_type = self.content_type.split(";", 1)[0]
         self.setByteStream(file)
         # TODO: self.setEncoding(encoding)
+        self.response_info = file.info() # a mimetools.Message instance
 
     def __repr__(self):
         return self.url

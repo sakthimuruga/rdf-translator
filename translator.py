@@ -170,13 +170,24 @@ def convert(f, do_pygmentize=False, file_format="file", source_format="rdfa", ta
                     prefixes[known_vocabs.keys()[known_vocabs.values().index(url)]] = url
                 else: # fallback using prefix.cc
                     prefixes = dict(prefixes.items() + getPrefixDict(url)) # add prefix to dict
-
-    else:
-        prefixes = known_vocabs
+    
+    if not prefixes:
+        g = rdflib.Graph()
+        if file_format == "string":
+            g.parse(data=f, format=source_format, publicID=base)
+        else:
+            g.parse(f, format=source_format, publicID=base)
+            
+        serialization = g.serialize(format=target_format).decode("UTF-8")
+        
+        for key, value in known_vocabs.items():
+            if value in serialization:
+                prefixes[key] = value
+        #prefixes = known_vocabs
     
     g = rdflib.Graph()
         
-    for key, value in dict.items(prefixes):
+    for key, value in prefixes.items():
         g.bind(key, value, override=True)
     
     if file_format == "string":

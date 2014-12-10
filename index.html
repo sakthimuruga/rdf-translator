@@ -13,11 +13,11 @@
 	<script type="text/javascript" src="/static/zeroclipboard/ZeroClipboard.js"></script>
 	<script type="text/javascript" src="/static/action.js"></script>
 	<meta name="author" content="Alex Stolz">
-	<!-- Date: 2014-05-24 -->
+	<!-- Date: 2014-12-10 -->
 </head>
 <body onload="document.getElementById('uri').focus()">
 	<!--<div id="debug"><h2>Debug Console:</h2></div>-->
-	<header><strong>RDF Translator</strong>, powered by RDFLib 4.0.1</header>
+	<header><strong>RDF Translator</strong>, powered by RDFLib 4.1.2</header>
 	<div id="box">
 		<section>
 			<p class="shade_box"><strong>RDF Translator</strong> is a multi-format conversion tool for structured markup. It provides translations between data formats ranging from RDF/XML to RDFa or Microdata. The service allows for conversions triggered either by URI or by direct text input. Furthermore it comes with a straightforward REST API for developers.</p>
@@ -32,7 +32,7 @@
 			</div>
 			<div id="tabs_box">
 				<textarea id="textbox" name="textbox" placeholder="... enter text here"></textarea>
-				<p>Examples: <a class="example" name="rdfa" href="#">RDFa</a> - <a class="example" name="microdata" href="#">Microdata</a> - <a class="example" name="xml" href="#">RDF/XML</a> - <a class="example" name="n3" href="#">N3</a> - <a class="example" name="nt" href="#">N-Triples</a> - <a class="example" name="rdf-json" href="#">RDF/JSON</a> - <a class="example" name="json-ld" href="#">JSON-LD</a></p>
+				<p>Examples: <a class="example" name="rdfa" href="#">RDFa</a> - <a class="example" name="microdata" href="#">Microdata</a> - <a class="example" name="xml" href="#">RDF/XML</a> - <a class="example" name="n3" href="#">N3</a> - <a class="example" name="nt" href="#">N-Triples</a><!-- - <a class="example" name="rdf-json" href="#">RDF/JSON</a>--> - <a class="example" name="json-ld" href="#">JSON-LD</a></p>
 			</div>
 			<button type="button" onclick="submit()">Submit</button>
 			<div id="settings">
@@ -45,7 +45,7 @@
 					<option value="n3">N3</option>
 					<!--<option value="turtle">Turtle</option>-->
 					<option value="nt">N-Triples</option>
-					<option value="rdf-json">RDF/JSON</option>
+					<!--<option value="rdf-json">RDF/JSON</option>-->
 					<option value="json-ld">JSON-LD</option>
 					<!--<option value="trix">Trix</option>-->
 				</select>
@@ -58,8 +58,8 @@
 					<option value="n3">N3</option>
 					<!--<option value="turtle">Turtle</option>-->
 					<option value="nt">N-Triples</option>
-					<option value="rdf-json-pretty">Pretty RDF/JSON</option>
-					<option value="rdf-json">RDF/JSON</option>
+					<!--<option value="rdf-json-pretty">Pretty RDF/JSON</option>
+					<option value="rdf-json">RDF/JSON</option>-->
 					<option value="json-ld">JSON-LD</option>
 					<!--<option value="trix">Trix</option>-->
 				</select>
@@ -126,383 +126,266 @@ http://rdf-translator.appspot.com/convert/<strong>n3</strong>/nt/content</pre>
 			<p>Eligible values that can be supplied for source and target data formats are:</p>
 			<ul>
 				<li>
-					source &rarr; <pre>rdfa | microdata | xml | n3 | nt | rdf-json | json-ld | <strong>detect</strong></pre>
+					source &rarr; <pre>rdfa | microdata | xml | n3 | nt |<!-- rdf-json |--> json-ld | <strong>detect</strong></pre>
 					The usage of the <em>detect</em> parameter will prompt the service to try to determine the input format automatically. But caution: Though being a fairly powerful feature, it will not work for every kind of input (e.g. the data format of textual input cannot be recognized).
 				</li>
 				<li>
-					target &rarr; <pre>rdfa | microdata | pretty-xml | xml | n3 | nt | rdf-json-pretty | rdf-json | json-ld<!-- | trix--></pre>
+					target &rarr; <pre>rdfa | microdata | pretty-xml | xml | n3 | nt |<!-- rdf-json-pretty | rdf-json |--> json-ld<!-- | trix--></pre>
 				</li>
 			</ul>
 			<h1>Bookmarklets</h1>
 			<p>You may want to add some of the links below to your bookmarks. That way you can easily show the contained markup of any page in your preferred syntaxes. In recent browsers for example, simply drag one of the bookmark items from the matrix below into the bookmark bar:</p>
 			<!-- open matrix -->
-			<table class="shade_box" style="width:100%; text-align:center" cellpadding="3" cellspacing="3"><tr><th colspan="2"></th><th colspan="9">Output</th></tr><tr><td colspan="2"></td><td>rdfa</td><td>microdata</td><td style="text-decoration: underline">pretty-xml</td><td>xml</td><td style="text-decoration: underline">n3</td><td>nt</td><td>rdf-json-pretty</td><td>rdf-json</td><td>json-ld</td></tr><tr><th rowspan="8">Input</th><td>[detect]</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> rdfa" title="detect to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> microdata" title="detect to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> pretty-xml" title="detect to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> xml" title="detect to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> n3" title="detect to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> nt" title="detect to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> rdf-json-pretty" title="detect to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> rdf-json" title="detect to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="detect -> json-ld" title="detect to json-ld" />
-			            </a>
-			        </td></tr><tr><td style="text-decoration: underline">rdfa</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> rdfa" title="rdfa to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> microdata" title="rdfa to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> pretty-xml" title="rdfa to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> xml" title="rdfa to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> n3" title="rdfa to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> nt" title="rdfa to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> rdf-json-pretty" title="rdfa to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> rdf-json" title="rdfa to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdfa -> json-ld" title="rdfa to json-ld" />
-			            </a>
-			        </td></tr><tr><td style="text-decoration: underline">microdata</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> rdfa" title="microdata to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> microdata" title="microdata to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> pretty-xml" title="microdata to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> xml" title="microdata to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> n3" title="microdata to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> nt" title="microdata to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> rdf-json-pretty" title="microdata to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> rdf-json" title="microdata to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="microdata -> json-ld" title="microdata to json-ld" />
-			            </a>
-			        </td></tr><tr><td>xml</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> rdfa" title="xml to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> microdata" title="xml to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> pretty-xml" title="xml to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> xml" title="xml to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> n3" title="xml to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> nt" title="xml to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> rdf-json-pretty" title="xml to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> rdf-json" title="xml to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="xml -> json-ld" title="xml to json-ld" />
-			            </a>
-			        </td></tr><tr><td>n3</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> rdfa" title="n3 to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> microdata" title="n3 to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> pretty-xml" title="n3 to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> xml" title="n3 to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> n3" title="n3 to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> nt" title="n3 to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> rdf-json-pretty" title="n3 to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> rdf-json" title="n3 to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="n3 -> json-ld" title="n3 to json-ld" />
-			            </a>
-			        </td></tr><tr><td>nt</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> rdfa" title="nt to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> microdata" title="nt to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> pretty-xml" title="nt to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> xml" title="nt to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> n3" title="nt to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> nt" title="nt to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> rdf-json-pretty" title="nt to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> rdf-json" title="nt to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="nt -> json-ld" title="nt to json-ld" />
-			            </a>
-			        </td></tr><tr><td>rdf-json</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> rdfa" title="rdf-json to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> microdata" title="rdf-json to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> pretty-xml" title="rdf-json to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> xml" title="rdf-json to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> n3" title="rdf-json to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> nt" title="rdf-json to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> rdf-json-pretty" title="rdf-json to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> rdf-json" title="rdf-json to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdf-json/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="rdf-json -> json-ld" title="rdf-json to json-ld" />
-			            </a>
-			        </td></tr><tr><td>json-ld</td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/rdfa/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> rdfa" title="json-ld to rdfa" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/microdata/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> microdata" title="json-ld to microdata" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/pretty-xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> pretty-xml" title="json-ld to pretty-xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/xml/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> xml" title="json-ld to xml" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/n3/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> n3" title="json-ld to n3" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/nt/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> nt" title="json-ld to nt" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/rdf-json-pretty/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> rdf-json-pretty" title="json-ld to rdf-json-pretty" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/rdf-json/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> rdf-json" title="json-ld to rdf-json" />
-			            </a>
-			        </td>
-			        <td style="width:70px">
-			            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/json-ld/html/'+encodeURIComponent(location.href);">
-			                <img src="static/bookmark.png" alt="json-ld -> json-ld" title="json-ld to json-ld" />
-			            </a>
-			        </td>
-				</tr>
-			</table>
+<table class="shade_box" style="width:100%; text-align:center" cellpadding="3" cellspacing="3"><tr><th colspan="2"></th><th colspan="7">Output</th></tr><tr><td colspan="2"></td><td>rdfa</td><td>microdata</td><td style="text-decoration: underline">pretty-xml</td><td>xml</td><td style="text-decoration: underline">n3</td><td>nt</td><td>json-ld</td></tr><tr><th rowspan="7">Input</th><td>[detect]</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> rdfa" title="detect to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> microdata" title="detect to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> pretty-xml" title="detect to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> xml" title="detect to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> n3" title="detect to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> nt" title="detect to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/detect/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="detect -> json-ld" title="detect to json-ld" />
+            </a>
+        </td></tr><tr><td style="text-decoration: underline">rdfa</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> rdfa" title="rdfa to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> microdata" title="rdfa to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> pretty-xml" title="rdfa to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> xml" title="rdfa to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> n3" title="rdfa to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> nt" title="rdfa to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/rdfa/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="rdfa -> json-ld" title="rdfa to json-ld" />
+            </a>
+        </td></tr><tr><td style="text-decoration: underline">microdata</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> rdfa" title="microdata to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> microdata" title="microdata to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> pretty-xml" title="microdata to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> xml" title="microdata to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> n3" title="microdata to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> nt" title="microdata to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/microdata/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="microdata -> json-ld" title="microdata to json-ld" />
+            </a>
+        </td></tr><tr><td>xml</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> rdfa" title="xml to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> microdata" title="xml to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> pretty-xml" title="xml to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> xml" title="xml to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> n3" title="xml to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> nt" title="xml to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/xml/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="xml -> json-ld" title="xml to json-ld" />
+            </a>
+        </td></tr><tr><td>n3</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> rdfa" title="n3 to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> microdata" title="n3 to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> pretty-xml" title="n3 to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> xml" title="n3 to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> n3" title="n3 to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> nt" title="n3 to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/n3/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="n3 -> json-ld" title="n3 to json-ld" />
+            </a>
+        </td></tr><tr><td>nt</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> rdfa" title="nt to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> microdata" title="nt to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> pretty-xml" title="nt to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> xml" title="nt to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> n3" title="nt to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> nt" title="nt to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/nt/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="nt -> json-ld" title="nt to json-ld" />
+            </a>
+        </td></tr><tr><td>json-ld</td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/rdfa/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> rdfa" title="json-ld to rdfa" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/microdata/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> microdata" title="json-ld to microdata" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/pretty-xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> pretty-xml" title="json-ld to pretty-xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/xml/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> xml" title="json-ld to xml" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/n3/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> n3" title="json-ld to n3" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/nt/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> nt" title="json-ld to nt" />
+            </a>
+        </td>
+        <td style="width:70px">
+            <a href="javascript:location.href='http://rdf-translator.appspot.com/convert/json-ld/json-ld/html/'+encodeURIComponent(location.href);">
+                <img src="static/bookmark.png" alt="json-ld -> json-ld" title="json-ld to json-ld" />
+            </a>
+        </td></tr></table>
 			<!-- close matrix -->
 			<h1>License and Source Code</h1>
 			<p>The source code of this tool is available under a <a href="http://www.gnu.org/licenses/lgpl.html">LPGL</a> license from <a href="https://bitbucket.org/alexstolz/rdf-translator">here</a>.</p>
-			<p>This service is built on top of <a href="https://github.com/RDFLib/rdflib">RDFLib 4.0.1</a>, an RDF library which allows to parse and serialize between data formats. Furthermore, it is using <a href="https://github.com/RDFLib/pyrdfa3">pyRdfa</a> for RDFa 1.1 parsing, <a href="https://github.com/RDFLib/pymicrodata">pyMicrodata</a> for Microdata parsing, <a href="https://github.com/RDFLib/rdflib-rdfjson">rdflib-rdfjson</a> for RDF/JSON, and <a href="https://github.com/RDFLib/rdflib-jsonld">rdflib-jsonld</a> for parsing and serializing JSON-LD. For the conversion to RDFa and Microdata we implemented custom serialization mechanisms based on RDFLib's RDF/XML serializer.
+			<p>This service is built on top of <a href="https://github.com/RDFLib/rdflib">RDFLib 4.1.2</a>, an RDF library which allows to parse and serialize between data formats. Furthermore, it is using <a href="https://github.com/RDFLib/pyrdfa3">pyRdfa</a> for RDFa 1.1 parsing, <a href="https://github.com/RDFLib/pymicrodata">pyMicrodata</a> for Microdata parsing,<!-- <a href="https://github.com/RDFLib/rdflib-rdfjson">rdflib-rdfjson</a> for RDF/JSON,--> and <a href="https://github.com/RDFLib/rdflib-jsonld">rdflib-jsonld</a> for parsing and serializing JSON-LD. For the conversion to RDFa and Microdata we implemented custom serialization mechanisms based on RDFLib's RDF/XML serializer.
 				<!--The conversion to RDFa and Microdata is borrowed from preliminary works done in <a href="http://www.ebusiness-unibw.org/tools/rdf2rdfa/">RDF2RDFa</a> and <a href="http://www.ebusiness-unibw.org/tools/rdf2microdata/">RDF2Microdata</a>, both service frontends to a converter package developed by Roberto García in the <a href="http://rhizomik.net/html/redefer/">ReDeFer project</a>. -->Unknown namespace prefixes are determined automatically using the <a href="http://prefix.cc">prefix.cc</a> namespace lookup of Richard Cyganiak.</p>
 			<h1>Publications</h1>
 			<p>Alex Stolz, Bene Rodriguez-Castro, and Martin Hepp: <a href="http://www.stalsoft.com/publications/rdf-translator-TR.pdf" title="Uses content negotiation to serve either HTML or PDF">RDF Translator: A RESTful Multi-Format Data Converter for the Semantic Web</a>. Technical Report TR-2013-1, E-Business and Web Science Research Group, 2013.</p>
@@ -528,7 +411,7 @@ http://rdf-translator.appspot.com/convert/<strong>n3</strong>/nt/content</pre>
 			</div>
 		</section>
 	</div>
-	<footer><div style="float: right">Last change: 24.05.2014</div><div><strong>Developer:</strong> Alex Stolz</div><div><strong>Disclaimer:</strong> This service is provided by the E-Business and Web Science Research Group at Universität der Bundeswehr München as it is with no explicit or implicit guarantees.</div></footer>
+	<footer><div style="float: right">Last change: 10.12.2014</div><div><strong>Developer:</strong> Alex Stolz</div><div><strong>Disclaimer:</strong> This service is provided by the E-Business and Web Science Research Group at Universität der Bundeswehr München as it is with no explicit or implicit guarantees.</div></footer>
 	<style type='text/css'>@import url('http://getbarometer.s3.amazonaws.com/assets/barometer/css/barometer.css');</style>
 	<script src='http://getbarometer.s3.amazonaws.com/assets/barometer/javascripts/barometer.js' type='text/javascript'></script>
 	<script type="text/javascript" charset="utf-8">

@@ -12,39 +12,30 @@ import logging
 import rdflib
 from rdflib import plugin
 from rdflib.store import Store
-from rdflib.graph import Graph
+from rdflib.graph import ConjunctiveGraph
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
 
 from rdflib.util import guess_format
+from rdflib.py3compat import PY3
 
-
-STORE_CONNECTION = ''
-STORE_TYPE = 'IOMemory'
 
 DEFAULT_INPUT_FORMAT = 'xml'
 DEFAULT_OUTPUT_FORMAT = 'n3'
 
-NS_BINDINGS = {
-    'rdf': RDF,
-    'rdfs': RDFS,
-    'owl': OWL,
-    'xsd': XSD,
-    'dc': "http://purl.org/dc/elements/1.1/",
-    'dct': "http://purl.org/dc/terms/",
-    'foaf': "http://xmlns.com/foaf/0.1/",
-    'wot': "http://xmlns.com/wot/0.1/"
-}
-
 
 def parse_and_serialize(input_files, input_format, guess,
                         outfile, output_format, ns_bindings,
-                        store_conn=STORE_CONNECTION, store_type=STORE_TYPE):
+                        store_conn="", store_type=None):
 
-    store = plugin.get(store_type, Store)()
-    store.open(store_conn)
-    graph = Graph(store)
+    if store_type:
+        store = plugin.get(store_type, Store)()
+        store.open(store_conn)
+        graph = ConjunctiveGraph(store)
+    else:
+        store = None
+        graph = ConjunctiveGraph()
 
     for prefix, uri in ns_bindings.items():
         graph.namespace_manager.bind(prefix, uri, override=False)
@@ -59,9 +50,11 @@ def parse_and_serialize(input_files, input_format, guess,
 
     if outfile:
         output_format, kws = _format_and_kws(output_format)
-        graph.serialize(
-            destination=outfile, format=output_format, base=None, **kws)
-    store.rollback()
+        kws.setdefault('base', None)
+        graph.serialize(destination=outfile, format=output_format, **kws)
+
+    if store:
+        store.rollback()
 
 
 def _format_and_kws(fmt):
@@ -76,10 +69,12 @@ def _format_and_kws(fmt):
     ('fmt', {'a': True, 'b': False})
     >>> _format_and_kws("fmt:c=d")
     ('fmt', {'c': 'd'})
+    >>> _format_and_kws("fmt:a=b:c")
+    ('fmt', {'a': 'b:c'})
     """
     fmt, kws = fmt, {}
     if fmt and ':' in fmt:
-        fmt, kwrepr = fmt.split(':')
+        fmt, kwrepr = fmt.split(':', 1)
         for kw in kwrepr.split(','):
             if '=' in kw:
                 k, v = kw.split('=')
@@ -169,13 +164,16 @@ def main():
         loglevel = logging.CRITICAL
     logging.basicConfig(level=loglevel)
 
-    ns_bindings = dict(NS_BINDINGS)
+    ns_bindings = {}
     if opts.ns:
         for ns_kw in opts.ns:
             pfx, uri = ns_kw.split('=')
             ns_bindings[pfx] = uri
 
     outfile = sys.stdout
+    if PY3:
+        outfile = sys.stdout.buffer
+
     if opts.no_out:
         outfile = None
 
